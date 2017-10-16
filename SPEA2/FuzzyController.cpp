@@ -51,7 +51,7 @@ int FuzzyController::Fuzzyfication(vector<double> hipervolumDifferences, vector<
 
 		double x = hipervolumDifferences.at(i);
 		double xLine = this->getLinguisticVariableHipervolume(x); // get a value from hipervolume difference
-		double y = differencesPoints.at(i).at(0); // Tem que ser pequeno
+		double y = differencesPoints.at(i).at(0); // small value is good
 		double yLine = this->getLinguisticVariableFirstPoint(y);
 		double z = differencesPoints.at(i).at(1);
 		double zLine = this->getLinguisticVariableLastPoint(z);
