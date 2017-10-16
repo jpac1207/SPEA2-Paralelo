@@ -133,21 +133,19 @@ vector<double> ZDT::evaluateIndividual(Individual* i) {
 
 	double f1 = 0;
 	double f2 = 0;
+	double sumP = 0;
 
 	for (size_t j = 0; j < n; j++) {
-
+		sumP += i->getGenes()[j];
 		f1 += (a[j] * pow(i->getGenes()[j], 2)) + (b[j] * i->getGenes()[j]) + c[j];
 		f2 += (alpha[j] * pow(i->getGenes()[j], 2)) + (beta[j] * i->getGenes()[j]) + gamma[j];
 	}
 
 	//constraint
-	if (f1 < 500) {
+	if (sumP < 500) {
 		f1 += 100000;
 		f2 += 100000;
-	}
-	else {
-		f1 *= 9.65;
-	}
+	}	
 	/* ------------------------ to be returned (f1 and f2 must be created and filled) ---------------------- */
 	vector<double> aptidoes;
 	aptidoes.push_back(f1);

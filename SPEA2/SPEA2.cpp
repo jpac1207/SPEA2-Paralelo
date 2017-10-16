@@ -130,7 +130,7 @@ void SPEA2::run() {
 		/*	cout << "---------------------------------------->" << endl;*/
 		double hp = hypervolume->calculateForTwoObjective(this->archive);
 		cout << hp << endl;
-		/*dump(archive);*/
+		dump(archive);
 		/*fullDump(archive);*/
 	}
 
