@@ -71,7 +71,7 @@ int FuzzyController::Fuzzyfication(vector<double> hipervolumDifferences, vector<
 		}
 	}
 }
-
+/*Centroide method*/
 double FuzzyController::Aggregation(double inputOne, double inputTwo, double inputThree)
 {
 	int initPoint = 0;
