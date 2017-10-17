@@ -15,11 +15,12 @@ PSO::~PSO()
 
 void PSO::run(Population& population)
 {
-	double inferiorGenes[] = { 5, 5, 5, 5, 5 , 5 };
-	double superiorGenes[] = { 50, 60, 100 , 120, 100, 60 };
+
+	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
+	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
 	this->initPopulation(population);
 	int swarmSize = population.getIndividuals().size();
-	int times = (swarmSize / 10);
+	int times = (swarmSize);
 
 	for (int i = 0; i < times; i++) {
 
@@ -42,7 +43,7 @@ void PSO::run(Population& population)
 			double equationA = (w * v) + ((c1 * r1) * (historicalGene - gene)) + ((c2 * r2) * (p[j] - gene));
 			trial->getVelocity()[j] = (equationA);
 			double equationB = (gene + equationA);
-			
+
 			if (equationB > superiorGenes[j] || equationB < inferiorGenes[j]) {
 
 				/*equationB = manterValorNoLimite(equationB);*/

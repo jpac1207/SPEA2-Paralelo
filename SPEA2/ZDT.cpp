@@ -144,7 +144,7 @@ vector<double> ZDT::evaluateIndividual(Individual* i) {
 	//constraint
 	if (sumP < 500) {
 		f1 += 100000;
-		f2 += 100000;
+		/*f2 += 100000;*/
 	}	
 	/* ------------------------ to be returned (f1 and f2 must be created and filled) ---------------------- */
 	vector<double> aptidoes;

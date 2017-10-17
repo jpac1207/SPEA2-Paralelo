@@ -112,8 +112,8 @@ vector<Individual*> GA::mutatingEed(Population& population) {
 
 	int numIndividuals = population.getSize();
 	int i = 0;
-	double inferiorGenes[] = { 5, 5, 5, 5, 5 , 5 };
-	double superiorGenes[] = { 50, 60, 100 , 120, 100, 60 };
+	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
+	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
 
 	for (i = 0; i < numIndividuals; i++) {
 
@@ -137,15 +137,16 @@ vector<Individual*> GA::crossover(Population& population) {
 
 	size_t numIndividuals = population.getIndividuals().size();
 	int i = 0;
-	int times = (numIndividuals / 10);
+	int times = (numIndividuals);
 	double lambda = 1;
 
 	double s = 0;
 	double a = 0.1;
 
-	double inferiorGenes[] = { 5, 5, 5, 5, 5 , 5 };
-	double superiorGenes[] = { 50, 60, 100 , 120, 100, 60 };
-
+	//double inferiorGenes[] = { 5, 5, 5, 5, 5 , 5 };
+	//double superiorGenes[] = { 50, 60, 100 , 120, 100, 60 };
+	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
+	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
 	/*for (i = 0; i < numIndividuals; i++) {
 
 		s += population.getIndividuals().at(i)->getAptidao()[0] + population.getIndividuals().at(i)->getAptidao()[1];

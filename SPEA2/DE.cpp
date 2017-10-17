@@ -64,8 +64,8 @@ void DE::mutar(vector<Individual*>& donators, Population & population)
 	size_t size = population.getIndividuals().size();
 	size_t solutionSize = population.getIndividuals()[0]->getGenes().size();
 	vector<Individual*> lvDonators;
-	double inferiorGenes[] = { 5, 5, 5, 5, 5 , 5 };
-	double superiorGenes[] = { 50, 60, 100 , 120, 100, 60 };
+	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
+	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
 
 	for (unsigned int i = 0; i < size; i++) {
 
