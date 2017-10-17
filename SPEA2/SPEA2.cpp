@@ -515,12 +515,11 @@ void SPEA2::survive(vector<Individual*>& individuals, int n) {
 
 void SPEA2::dump(vector<Individual*> individuals) {
 
-	cout << "\n Population: " << endl;
+	/*cout << "\n Population: " << endl;*/
 	for (unsigned int i = 0; i < this->archive.size(); i++) {
 
 		cout << individuals.at(i)->getAptidao()[0] << ";" << individuals.at(i)->getAptidao()[1] << endl;
 	}
-
 }
 
 void SPEA2::dumpPopulation() {

@@ -13,12 +13,14 @@ TestUtil::~TestUtil()
 
 void TestUtil::run()
 {
-	vector<Individual*> individuals = new PopulationReader()->loadFromArquive("logs/individuals.txt");
+	PopulationReader* p = new PopulationReader();
+	vector<Individual*> individuals = p->loadFromArquive("logs/individuals.txt");
 	vector<Individual*>nonDominatedSolutions = nonDominatedSol(individuals);
 	HyperVolumeCalculator h;
 	cout << h.calculateForTwoObjective(nonDominatedSolutions) << endl;
 	clearVector(nonDominatedSolutions);
 	clearVector(individuals);
+	delete p;
 }
 
 vector<Individual*> TestUtil::nonDominatedSol(vector<Individual*> individuals) {
