@@ -45,11 +45,6 @@ bool compareDensity(Individual* i, Individual* j) {
 	return (f1 < f2);
 }
 
-bool compareMean(Individual* i, Individual* j) {
-
-	return (i->getAptidao()[0] + i->getAptidao()[1]) < (j->getAptidao()[0] + j->getAptidao()[1]);
-}
-
 void SPEA2::run() {
 
 	this->lastHipervolume = 0.0;
@@ -62,7 +57,7 @@ void SPEA2::run() {
 	HyperVolumeCalculator* hypervolume = new HyperVolumeCalculator();
 	MatTransform* matTransform = new MatTransform();
 	this->lastHipervolume = hypervolume->calculateForTwoObjective(this->population->getIndividuals());
-	
+
 	for (int i = 0; i < this->numberOfIterations; i++) {
 
 		if (this->rank == 0) {
@@ -128,8 +123,8 @@ void SPEA2::run() {
 
 	if (rank == 0) {
 		/*	cout << "---------------------------------------->" << endl;*/
-		double hp = hypervolume->calculateForTwoObjective(this->archive);
-		cout << hp << endl;
+		/*double hp = hypervolume->calculateForTwoObjective(this->archive);
+		cout << hp << endl;*/
 		dump(archive);
 		/*fullDump(archive);*/
 	}
@@ -253,19 +248,18 @@ vector<Individual*> SPEA2::nonDominatedSol(vector<Individual*> individuals) {
 
 		bool oneDominated = false;
 
-		if (i != j) {
-			for (j = 0; j < individuals.size(); j++) {
-
+		for (j = 0; j < individuals.size(); j++) {
+			if (i != j) {
 				if (this->isDominated(individuals[i], individuals[j])) {
 					oneDominated = true;
 					break;
 				}
 			}
+		}
 
-			if (!oneDominated) {
-				Individual* id = new Individual(*(individuals.at(i)));
-				nonDominated.push_back(id);//Verify
-			}
+		if (!oneDominated) {
+			Individual* id = new Individual(*(individuals.at(i)));
+			nonDominated.push_back(id);//Verify
 		}
 
 	}
@@ -612,11 +606,11 @@ void SPEA2::competitiveAbordage(vector<double> hipervolumes, vector< vector< Ind
 {
 	int pos = this->getMaxValuePosition(hipervolumes); // get the position of best hipervolume founded
 	double bestHipervolumeFounded = hipervolumes.at(pos);
-	
+
 	//Alter population only if the founded hipervolume was better than old
 	if (bestHipervolumeFounded > this->lastHipervolume) {
-		vector<Individual*> newPop = populationsOfEachMetaheuristic.at(pos);		
-		this->clearVector(this->population->getIndividuals());	
+		vector<Individual*> newPop = populationsOfEachMetaheuristic.at(pos);
+		this->clearVector(this->population->getIndividuals());
 		this->population->setIndividuals(newPop);
 		this->lastHipervolume = bestHipervolumeFounded;
 	}
@@ -646,20 +640,17 @@ void SPEA2::fuzzyAbordage(vector<double> hipervolumes, vector<vector<Individual*
 void SPEA2::cooperativeAbordage(vector< vector<Individual*> >& populationsOfEachMetaheuristic)
 {
 	vector<Individual*> nonDominated;
-	/*int sizeEach = this->populationSize / this->qtdMetaHeuristcs;*/
 
 	for (size_t i = 0; i < populationsOfEachMetaheuristic.size(); i++) {
 
-		/*vector<Individual*> vec = this->cooperativeClustering(populationsOfEachMetaheuristic.at(i), i);*/
 		this->copyVectorIndividuals(populationsOfEachMetaheuristic.at(i), nonDominated);
-		/*this->clearVector(vec);*/
 	}
 
 	this->generical_clustering(nonDominated, (nonDominated.size() - this->populationSize));
 	HyperVolumeCalculator* calc = new HyperVolumeCalculator();
 	double value = calc->calculateForTwoObjective(nonDominated);
 	delete calc;
-	
+
 	/*if (value < this->lastHipervolume) {*/
 	this->clearVector(this->population->getIndividuals());
 	this->population->setIndividuals(nonDominated);

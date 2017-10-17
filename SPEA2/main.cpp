@@ -30,16 +30,16 @@ int main(int argc, char* argv[])
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 31; i++) {
 
 		SPEA2* spea2 = new SPEA2(rank);
 		spea2->run();
 		delete spea2;
-	}	
-	
+	}
+
 	MPI_Finalize();
-	if(rank == 0)
+	if (rank == 0)
 		std::getchar();
-	
+
 	return 0;
 }

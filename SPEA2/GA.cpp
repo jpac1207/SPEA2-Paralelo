@@ -137,7 +137,7 @@ vector<Individual*> GA::crossover(Population& population) {
 
 	size_t numIndividuals = population.getIndividuals().size();
 	int i = 0;
-	int times = (numIndividuals);
+	int times = (numIndividuals / 10);
 	double lambda = 1;
 
 	double s = 0;

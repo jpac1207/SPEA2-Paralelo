@@ -42,8 +42,8 @@ class SPEA2
 		static const bool debug = false;
 		
     private:
-        static const int numberOfIterations = 200;
-        static const int archiveSize = 100;
+        static const int numberOfIterations = 100;
+        static const int archiveSize = 50;
         static const int populationSize = 300;
         static const int qtdGenes = 6;		
 		static const int qtdThreads = 4;

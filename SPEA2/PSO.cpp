@@ -20,7 +20,7 @@ void PSO::run(Population& population)
 	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
 	this->initPopulation(population);
 	int swarmSize = population.getIndividuals().size();
-	int times = (swarmSize);
+	int times = (swarmSize / 10);
 
 	for (int i = 0; i < times; i++) {
 

@@ -129,7 +129,7 @@ vector<double> ZDT::evaluateIndividual(Individual* i) {
 
 	double alpha[] = { 0.00419, 0.00419, 0.00683, 0.00683, 0.00461, 0.00461 };
 	double beta[] = { 0.32767, 0.32767, -0.545514, -0.54551, -0.51116, -0.51116 };
-	double gamma[] = { 13.85932, 13.85932, 0.26690, 40.26690, 42.89553, 42.89553 };
+	double gamma[] = { 13.85932, 13.85932, 40.26690, 40.26690, 42.89553, 42.89553 };
 
 	double f1 = 0;
 	double f2 = 0;
@@ -144,7 +144,7 @@ vector<double> ZDT::evaluateIndividual(Individual* i) {
 	//constraint
 	if (sumP < 500) {
 		f1 += 100000;
-		/*f2 += 100000;*/
+		f2 += 100000;
 	}	
 	/* ------------------------ to be returned (f1 and f2 must be created and filled) ---------------------- */
 	vector<double> aptidoes;
