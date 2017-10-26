@@ -13,13 +13,17 @@ TestUtil::~TestUtil()
 
 void TestUtil::run()
 {
-	PopulationReader* p = new PopulationReader();
-	vector<Individual*> individuals = p->loadFromArquive("logs/individuals.txt");
-	vector<Individual*>nonDominatedSolutions = nonDominatedSol(individuals);
-	HyperVolumeCalculator h;
-	cout << h.calculateForTwoObjective(nonDominatedSolutions) << endl;
-	clearVector(nonDominatedSolutions);
-	clearVector(individuals);
+	PopulationReader* p = new PopulationReader();	
+	vector<Individual*> individuals = p->loadFromArquive("individuals.txt");
+	
+	if (individuals.size() > 0) {
+		vector<Individual*>nonDominatedSolutions = nonDominatedSol(individuals);
+		HyperVolumeCalculator h;
+		cout << h.calculateForTwoObjective(nonDominatedSolutions) << endl;
+		dump(nonDominatedSolutions);
+		clearVector(nonDominatedSolutions);
+		clearVector(individuals);
+	}
 	delete p;
 }
 
@@ -83,4 +87,13 @@ void TestUtil::clearVector(vector<Individual*>& v)
 		delete v[i];
 	}
 	v.clear();
+}
+
+void TestUtil::dump(vector<Individual*> individuals) {
+
+	/*cout << "\n Population: " << endl;*/
+	for (unsigned int i = 0; i < individuals.size(); i++) {
+
+		cout << individuals.at(i)->getAptidao()[0] << ";" << individuals.at(i)->getAptidao()[1] << endl;
+	}
 }

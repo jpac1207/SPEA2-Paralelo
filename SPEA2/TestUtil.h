@@ -15,5 +15,6 @@ public:
 	static vector<Individual*> nonDominatedSol(vector<Individual*> individuals);
 	static bool isDominated(Individual * one, Individual * two);
 	static void clearVector(vector<Individual*>& v);
+	static void dump(vector<Individual*> individuals);
 };
 

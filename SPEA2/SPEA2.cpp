@@ -91,7 +91,7 @@ void SPEA2::run() {
 			vector<double> lvHipervolumes; //to store the hipervolume of each metaheuristic
 			vector< vector<Individual*> > lvIndividuals;// to store individuals of each metaheuristic 
 
-		  /* Wait for a matrix with the hiperbolume found
+		  /* Wait for a matrix with the hipervolume found
 		  and a population of each slave to continue*/
 			int lvCount = 0;
 			while (lvCount < this->numberOfSlaves) {
@@ -103,9 +103,10 @@ void SPEA2::run() {
 			}
 
 			/*this->fuzzyAbordage(lvHipervolumes, lvIndividuals);*/
-		/*	this->competitiveAbordage(lvHipervolumes, lvIndividuals);*/
-			this->cooperativeAbordage(lvIndividuals);
-			/*clear copys in RT* and index*/
+			this->competitiveAbordage(lvHipervolumes, lvIndividuals);
+			/*this->cooperativeAbordage(lvIndividuals);*/
+
+			/*clear copys in RT and index*/
 			this->clearVector(RT);
 			this->clearVector(index);
 		}
@@ -123,8 +124,8 @@ void SPEA2::run() {
 
 	if (rank == 0) {
 		/*	cout << "---------------------------------------->" << endl;*/
-		/*double hp = hypervolume->calculateForTwoObjective(this->archive);
-		cout << hp << endl;*/
+		double hp = hypervolume->calculateForTwoObjective(this->archive);
+		cout << hp << endl;
 		dump(archive);
 		/*fullDump(archive);*/
 	}
@@ -459,18 +460,24 @@ void SPEA2::orderMatrix(vector< vector<double> >& matriz) {
 	size_t length = matriz.size();
 
 	for (int i = 0; i < length; i++) {
-		vector<double> arrayAux;
+		vector<double> arrayaux;
 		for (int j = 0; j < length; j++) {
-			arrayAux.push_back(matriz[i][j]);
+			arrayaux.push_back(matriz[i][j]);
 		}
-		std::sort(arrayAux.begin(), arrayAux.end(), compare);
+		std::sort(arrayaux.begin(), arrayaux.end(), compare);
 		for (int j = 0; j < length; j++) {
-			matriz[i][j] = arrayAux.at(j);
+			matriz[i][j] = arrayaux.at(j);
 		}
-		arrayAux.clear();
+		arrayaux.clear();
 	}
 
-	/*std::sort(arrayAux.begin(), arrayAux.end(), compare);
+	/*for (unsigned int i = 0; i < length; i++) {
+		for (unsigned int j = 0; j < length; j++) {
+			arrayAux.push_back(matriz[i][j]);
+		}
+	}
+
+	std::sort(arrayAux.begin(), arrayAux.end(), compare);
 
 	for (unsigned int i = 0; i < length; i++) {
 		for (unsigned int j = 0; j < length; j++) {

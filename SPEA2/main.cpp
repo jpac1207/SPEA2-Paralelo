@@ -3,6 +3,8 @@
 #include<stdio.h>
 //#include<cstdlib>
 #include<time.h>
+#include <sstream>
+
 #include"mpi.h"
 
 #include"Individual.h"
@@ -10,7 +12,8 @@
 #include"PopulationReader.h"
 #include"HyperVolumeCalculator.h"
 #include"SPEA2.h"
-#include <sstream>
+#include"TestUtil.h"
+
 
 using namespace std;
 
@@ -23,8 +26,13 @@ int main(int argc, char* argv[])
 		Departamento Acadêmico de Informatica
 	*/
 
+	/*TestUtil t;
+	t.run();
+	getchar();*/
+
+
 	srand((unsigned int)time(NULL));
-	/* to identify the current process	*/
+
 	int rank = 0;
 
 	MPI_Init(&argc, &argv);
@@ -38,8 +46,10 @@ int main(int argc, char* argv[])
 	}
 
 	MPI_Finalize();
-	if (rank == 0)
+	if (rank == 0) {
+		cout << "FIM" << endl;
 		std::getchar();
+	}
 
 	return 0;
 }
