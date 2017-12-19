@@ -25,16 +25,14 @@ class Population
         int getSize();
         void setSize(int size);
         Individual* getBestIndividual(bool minimization);
-        void initPopulation(double limiteInferior, double limiteSuperior, int qtdGenes);
-		void initPopulationEed(int qtdGenes);
+        void initPopulation(vector<double> limiteInferior, vector<double> limiteSuperior, int qtdGenes);		
 		void dump();
     protected:
 
     private:
         vector<Individual*> individuals;
         int size;
-        vector<double> getGenes(int qtdGenes, double limiteInferior, double limiteSuperior);
-		vector<double> getGenesEed(int qtdGenes);		
+        vector<double> getGenes(int qtdGenes, vector<double> limiteInferior, vector<double> limiteSuperior);	
 		vector<double> getVelocity(int qtdGenes);
         vector<double> evaluateIndividual(Individual* individual);
 

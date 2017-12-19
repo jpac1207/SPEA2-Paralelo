@@ -23,7 +23,6 @@ bool compare(Individual* i, const Individual* j) {
 	return (f1 < f2);
 }
 
-
 bool compareMax(Individual * i, Individual* j) {
 
 	return (i->getFitness() > j->getFitness());
@@ -73,31 +72,18 @@ vector<double> Population::evaluateIndividual(Individual* individual) {
 	return value;
 }
 
-vector<double> Population::getGenes(int qtdGenes, double limiteInferior, double limiteSuperior) {
+vector<double> Population::getGenes(int qtdGenes, vector<double> limiteInferior, vector<double> limiteSuperior) {
 
 	vector<double> genes;
 	int i = 0;
-	/*genes.push_back((0 + (((double)rand() / (double)(RAND_MAX)) * (1))));*/
+
 	for (i = 0; i < qtdGenes; i++) {
-		double gene = (limiteInferior + (((double)rand() / (double)(RAND_MAX)) * fabs(limiteInferior - limiteSuperior)));
+		double gene = (limiteInferior[i] + (((double)rand() / (double)(RAND_MAX)) * fabs(limiteInferior[i] - limiteSuperior[i])));
 		genes.push_back(gene);
 	}
 	return genes;
 }
 
-vector<double> Population::getGenesEed(int qtdGenes) {
-	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
-	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
-	vector<double> genes;
-	int i = 0;
-
-	for (i = 0; i < qtdGenes; i++) {
-
-		double gene = (inferiorGenes[i] + (((double)rand() / (double)(RAND_MAX)) * (superiorGenes[i] - inferiorGenes[i])));
-		genes.push_back(gene);
-	}
-	return genes;
-}
 
 vector<double> Population::getVelocity(int qtdGenes)
 {
@@ -106,7 +92,7 @@ vector<double> Population::getVelocity(int qtdGenes)
 	return velocity;
 }
 
-void Population::initPopulation(double limiteInferior, double limiteSuperior, int qtdGenes) {
+void Population::initPopulation(vector<double> limiteInferior, vector<double> limiteSuperior, int qtdGenes) {
 
 	int i = 0;
 	int numIndividuals = this->getSize();
@@ -120,25 +106,6 @@ void Population::initPopulation(double limiteInferior, double limiteSuperior, in
 		id->setAptidao(evaluateIndividual(id));
 		this->getIndividuals().push_back(id);
 	}
-
-}
-
-/*Environmental Economic dispatch*/
-void Population::initPopulationEed(int qtdGenes) {
-
-	int i = 0;
-	int numIndividuals = this->getSize();
-	srand((unsigned)time(NULL));
-
-	for (i = 0; i < numIndividuals; i++) {
-		Individual* id = new Individual();
-		id->setQtdGenes(qtdGenes);
-		id->setGenes(getGenesEed(id->getQtdGenes()));
-		id->setVelocity(getVelocity(id->getQtdGenes()));
-		id->setAptidao(evaluateIndividual(id));
-		this->getIndividuals().push_back(id);
-	}
-
 }
 
 void Population::dump() {

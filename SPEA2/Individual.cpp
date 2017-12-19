@@ -7,13 +7,13 @@ Individual::Individual()
 
 Individual::Individual(int qtdGenes)
 {
-	for (int i = 0; i < qtdGenes; i++) this->velocity.push_back(0.5);
+	for (int i = 0; i < qtdGenes; i++) this->velocity.push_back(1);
 }
 
 Individual::Individual(const Individual & ind)
 {
 	for (int i = 0; i < ind.genes.size(); i++) {
-		this->velocity.push_back(0.5);
+		this->velocity.push_back(1);
 		this->genes.push_back(ind.genes[i]);
 	}
 	for (int i = 0; i < ind.historicalGenes.size(); i++) {

@@ -43,14 +43,14 @@ class SPEA2
 		
     private:
         static const int numberOfIterations = 100;
-        static const int archiveSize = 100;
+        static const int archiveSize = 50;
         static const int populationSize = 300;
         static const int qtdGenes = 6;		
 		static const int qtdThreads = 4;
 		static const int numberOfSlaves = 3;
 		static const int qtdMetaHeuristcs = 3;		
-		double limiteInferior = 0;
-		double limiteSuperior = 1;
+		vector<double> limiteInferior;
+		vector<double> limiteSuperior;
         const int k = (int) sqrt( populationSize );
 		double lastHipervolume;
 		int argc;
@@ -67,36 +67,35 @@ class SPEA2
 		vector<Individual*> fillRT(vector<Individual*> pop, vector<Individual*> archive);
         void compute_s(vector<Individual*>& RT);
 		void compute_raw(vector<Individual*>& RT);
-		void compute_density(vector<Individual*>& RT);
+		void compute_d(vector<Individual*>& RT);
         void distances(vector< vector<double> >& matrix, vector<Individual*> individuos);
         void orderMatrix(vector< vector<double> >& matriz);
         void getNonDominatedSolutions(vector<Individual*>& index, vector<Individual*> RT);
         void fillArchive(vector<Individual*>& RT, vector<Individual*>& archive, vector<Individual*>& index);
         void clustering(vector<Individual*>& archive, vector<Individual*>& individuos);
-		void generical_clustering(vector<Individual*>& individuos, int nToRemove);
+		void genericalClustering(vector<Individual*>& individuos, int nToRemove);
         void getLineFromAMatrix(vector<double>& lineMatrix, vector< vector<double> >& matriz, int line);
 		void getLinePieceFromAMatrix(vector<double>& lineMatrix, vector< vector<double> >& matriz, int line, int initColumn);
         int getMinValuePosition(vector<double> vetor);
 		int getMaxValuePosition(vector<double> vetor);
         void removeLineAndColumn(vector< vector<double> >& matriz, int numLinha, int numColuna);
         void copyVector(vector<double>& line, vector<double> original, int posInicial, int posFinal);
-        bool contains(vector<Individual*> vetor, Individual* individual);
+        bool contains(vector<Individual*>& vetor, Individual* individual);
 		void survive(vector<Individual*>& individuals, int n);
         void dump(vector<Individual*> individuals);
 		void dumpPopulation();
 		void fullDump(vector<Individual*> individuals);
-		void dumpIndividual(Individual* ind);
-		void distributeIndividuals(Population* & pop, vector<Population*>& subPopulations);
+		void dumpIndividual(Individual* ind);		
 		int getMetaHeuristc();	
 		string getMetaHeuristcaByNumber(int number);
 		void competitiveAbordage(vector<double> hipervolumes, vector< vector< Individual*> >& populationsOfEachMetaheuristic);
 		void fuzzyAbordage(vector<double> hipervolumes, vector< vector< Individual*> >& populationsOfEachMetaheuristic);
-		void cooperativeAbordage(vector< vector<Individual*> >& populationsOfEachMetaheuristic);
-		vector<Individual*> cooperativeClustering(vector<Individual*>& individuals, int number);
+		void cooperativeAbordage(vector< vector<Individual*> >& populationsOfEachMetaheuristic);		
 		int comparePopulations(vector<vector<Individual*>>& populationsOfEachMetaheuristic);
 		int randomPosition(Population* & pop);
 		int randomPosition(int size);
-		void modifyPopulation(int rank, Population* population);		
+		void modifyPopulation(int rank, Population* population);
+		bool disperse(vector<Individual*> v, Individual * id);
 		void sendMessage(int numOfProcesses);
 		double receiveMessage();
 		void waitMessageForMe(int tag);
@@ -105,7 +104,8 @@ class SPEA2
 		double* waitMatrixWithHypervolumeForMe(int tag, size_t numLines, size_t numCollums);
 		void clearVector(vector<Individual*>& v);
 		void copyVectorIndividuals(vector<Individual*>& one, vector<Individual*>& two);
-	
+		void initBounds(double lowerBound, double upperBound);
+		void initBounds();
 };
 
 #endif // SPEA2_H

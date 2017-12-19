@@ -17,23 +17,25 @@ class DE
 public:
 	DE();
 	~DE();
-	void run(Population& population);
-	void setLimiteInferior(double limiteInferior);
-	void setLimiteSuperior(double limiteSuperior);
+	void run(Population* population);
+	void setLimiteInferior(vector<double> limiteInferior);
+	void setLimiteSuperior(vector<double> limiteSuperior);
 	void setCrossoverRate(double crossoverRate);
-	double getLimiteInferior();
-	double getLimiteSuperior();
+	vector<double> getLimiteInferior();
+	vector<double> getLimiteSuperior();
 	double getCrossoverRate();
 	void setObjective(ZDT* obj);
 private:
-	double limiteInferior;
-	double limiteSuperior;
+	vector<double> limiteInferior;
+	vector<double> limiteSuperior;
 	double crossoverRate;
 	ZDT* objective;
-	void mutar(vector<Individual*>& donators, Population& population);
-	void cruzar(vector<Individual*> donators, Population& population);
-	bool isDominate(Individual* one, Individual* two);
-	int getRandomIndividual(Population& population);
+	void mutar(vector<Individual*>& donators, Population* population);
+	void cruzar(vector<Individual*> donators, Population* population);
+	bool isDominated(Individual* one, Individual* two);
+	int getRandomIndividual(Population* population);
+	bool nonDominated(Individual * ind, Population * pop);
+	int getWeakPos(vector<Individual*>& individuals, Individual * ind);
 	vector<double> evaluateIndividual(Individual* individual);
 	void clearVector(vector<Individual*> &v);
 };

@@ -13,23 +13,22 @@ DE::~DE()
 	delete this->objective;
 }
 
-void DE::run(Population& population)
+void DE::run(Population* population)
 {
-
-	/*for (int generations = 0; generations < 60; generations++) {*/
-	vector<Individual*> donators;
-	this->mutar(donators, population);
-	this->cruzar(donators, population);
-	this->clearVector(donators);
-	/*}*/
+	for (int generations = 0; generations < 50; generations++) {
+		vector<Individual*> donators;
+		this->mutar(donators, population);
+		this->cruzar(donators, population);
+		this->clearVector(donators);
+	}
 }
 
-void DE::setLimiteInferior(double limiteInferior)
+void DE::setLimiteInferior(vector<double> limiteInferior)
 {
 	this->limiteInferior = limiteInferior;
 }
 
-void DE::setLimiteSuperior(double limiteSuperior)
+void DE::setLimiteSuperior(vector<double> limiteSuperior)
 {
 	this->limiteSuperior = limiteSuperior;
 }
@@ -39,12 +38,12 @@ void DE::setCrossoverRate(double crossoverRate)
 	this->crossoverRate = crossoverRate;
 }
 
-double DE::getLimiteInferior()
+vector<double> DE::getLimiteInferior()
 {
 	return this->limiteInferior;
 }
 
-double DE::getLimiteSuperior()
+vector<double> DE::getLimiteSuperior()
 {
 	return this->limiteSuperior;
 }
@@ -59,22 +58,22 @@ void DE::setObjective(ZDT * obj)
 	this->objective = obj;
 }
 
-void DE::mutar(vector<Individual*>& donators, Population & population)
+void DE::mutar(vector<Individual*>& donators, Population* population)
 {
-	size_t size = population.getIndividuals().size();
-	size_t solutionSize = population.getIndividuals()[0]->getGenes().size();
+	size_t size = population->getIndividuals().size();
+	size_t solutionSize = population->getIndividuals()[0]->getGenes().size();
 	vector<Individual*> lvDonators;
-	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
-	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
-
+	
 	for (unsigned int i = 0; i < size; i++) {
 
 		int posOne = i;
-		Individual* one = population.getIndividuals()[posOne];
+		Individual* one = population->getIndividuals()[posOne];
 		Individual* donator = new Individual();
+		Individual* target = new Individual(*one);
+
 		donator->setAptidao(one->getAptidao());
 		donator->setGenes(one->getGenes());
-		donator->setTarget(one);
+		donator->setTarget(target);
 
 		int posTwo = 0;
 		Individual* first;
@@ -83,7 +82,7 @@ void DE::mutar(vector<Individual*>& donators, Population & population)
 			posTwo = getRandomIndividual(population);
 		} while (posOne == posTwo);
 
-		first = population.getIndividuals()[posTwo];
+		first = population->getIndividuals()[posTwo];
 		int posThree = 0;
 		Individual* second;
 
@@ -91,7 +90,7 @@ void DE::mutar(vector<Individual*>& donators, Population & population)
 			posThree = getRandomIndividual(population);
 		} while (posOne == posThree || posTwo == posThree);
 
-		second = population.getIndividuals()[posThree];
+		second = population->getIndividuals()[posThree];
 		int posFour = 0;
 		Individual* third;
 
@@ -99,17 +98,17 @@ void DE::mutar(vector<Individual*>& donators, Population & population)
 			posFour = getRandomIndividual(population);
 		} while ((posOne == posFour) || (posTwo == posFour) || (posThree == posFour));
 
-		third = population.getIndividuals()[posFour];
+		third = population->getIndividuals()[posFour];
 		double f = 1.0;
 
 		for (int j = 0; j < solutionSize; j++) {
 
 			double newGene = first->getGenes()[j] + (f * (second->getGenes()[j] - third->getGenes()[j]));
-			
-			if (newGene > superiorGenes[j])
-				newGene = superiorGenes[j];
-			else if (newGene < inferiorGenes[j])
-				newGene = inferiorGenes[j];
+
+			if (newGene > limiteSuperior[j])
+				newGene = limiteSuperior[j];
+			else if (newGene < limiteInferior[j])
+				newGene = limiteInferior[j];
 
 			donator->getGenes()[j] = newGene;
 		}
@@ -120,39 +119,41 @@ void DE::mutar(vector<Individual*>& donators, Population & population)
 	donators.swap(lvDonators);
 }
 
-void DE::cruzar(vector<Individual*> donators, Population& population)
+void DE::cruzar(vector<Individual*> donators, Population* population)
 {
-	size_t size = population.getIndividuals().size();
-	size_t solutionSize = population.getIndividuals()[0]->getGenes().size();
+	size_t size = population->getIndividuals().size();
+	size_t solutionSize = population->getIndividuals()[0]->getGenes().size();
 
 	for (int i = 0; i < size; i++) {
 
 		Individual* donator = donators[i];
 		Individual* target = donator->getTarget();
-		Individual* experimental = new Individual();
-		experimental->setQtdGenes(donator->getQtdGenes());
-
+		Individual* candidate = new Individual();
+		candidate->setQtdGenes(donator->getQtdGenes());
+		
 		for (int j = 0; j < solutionSize; j++) {
 
 			double tentative = ((double)rand() / (double)(RAND_MAX)) * 1;
-
+		
 			if (tentative > crossoverRate)
-				experimental->getGenes().push_back(target->getGenes()[j]);
+				candidate->getGenes().push_back(target->getGenes()[j]);
 			else
-				experimental->getGenes().push_back(donator->getGenes()[j]);
+				candidate->getGenes().push_back(donator->getGenes()[j]);
 		}
 
-		experimental->setAptidao(this->evaluateIndividual(experimental));
+		candidate->setAptidao(this->evaluateIndividual(candidate));
 
-		if (isDominate(population.getIndividuals()[i], experimental)) {
-			population.getIndividuals()[i]->setAptidao(experimental->getAptidao());
-			population.getIndividuals()[i]->setGenes(experimental->getGenes());
+		if (isDominated(target, candidate)) {
+			int pos = i;
+			population->getIndividuals()[pos]->setAptidao(candidate->getAptidao());
+			population->getIndividuals()[pos]->setGenes(candidate->getGenes());
 		}
-		delete experimental;
+		delete candidate;
+		delete target;
 	}
 }
 
-bool DE::isDominate(Individual* one, Individual*  two)
+bool DE::isDominated(Individual* one, Individual*  two)
 {
 	bool anyDominate = false;
 
@@ -177,10 +178,35 @@ bool DE::isDominate(Individual* one, Individual*  two)
 	return anyDominate;
 }
 
-int DE::getRandomIndividual(Population & population)
+int DE::getRandomIndividual(Population* population)
 {
-	return 0 + (rand() % abs((int)population.getIndividuals().size()));
+	return 0 + (rand() % abs((int)population->getIndividuals().size()));
 }
+
+bool DE::nonDominated(Individual* ind, Population* pop) {
+
+	unsigned j = 0;
+	for (j = 0; j < pop->getIndividuals().size(); j++) {
+
+		if (this->isDominated(ind, pop->getIndividuals()[j])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+int DE::getWeakPos(vector<Individual*>& individuals, Individual* ind) {
+
+	for (unsigned int i = 0; i < individuals.size(); i++) {
+		if (isDominated(individuals[i], ind)) {
+			return i;
+		}
+	}
+
+	return  0 + (rand() % individuals.size());
+}
+
 
 vector<double> DE::evaluateIndividual(Individual * individual)
 {
@@ -195,4 +221,5 @@ void DE::clearVector(vector<Individual*>& v)
 {
 	for (size_t i = 0; i < v.size(); i++)
 		delete v[i];
+	v.clear();
 }

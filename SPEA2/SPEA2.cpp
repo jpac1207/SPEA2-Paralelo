@@ -51,22 +51,23 @@ void SPEA2::run() {
 	this->objective = new ZDT();
 	this->population = new Population();
 	this->population->setSize(this->populationSize);
-	/*if (rank == 0)this->population->initPopulation(this->limiteInferior, this->limiteSuperior, this->qtdGenes);*/
-	this->population->initPopulationEed(qtdGenes);
+	this->initBounds();
+	this->population->initPopulation(this->limiteInferior, this->limiteSuperior, this->qtdGenes);
 	this->archive = this->nonDominatedSol(this->population->getIndividuals());
 	HyperVolumeCalculator* hypervolume = new HyperVolumeCalculator();
 	MatTransform* matTransform = new MatTransform();
-	this->lastHipervolume = hypervolume->calculateForTwoObjective(this->population->getIndividuals());
+	this->lastHipervolume = hypervolume->calculateForTwoObjective(this->archive);
 
 	for (int i = 0; i < this->numberOfIterations; i++) {
 
 		if (this->rank == 0) {
+
 			this->clearVector(this->RT);
-			RT = this->fillRT(this->population->getIndividuals(), archive);
-			this->clearVector(archive);
+			RT = this->fillRT(population->getIndividuals(), archive);
 			this->compute_s(RT);
 			this->compute_raw(RT);
-			this->compute_density(RT);
+			this->compute_d(RT);
+			this->clearVector(archive);
 			this->clearVector(index);
 
 			this->getNonDominatedSolutions(index, RT);
@@ -82,7 +83,7 @@ void SPEA2::run() {
 				this->clustering(this->archive, index);
 			}
 
-			if (i == (this->numberOfIterations - 1)) break; // não modificar, pois não vão haver mais iterações	
+			if (i == (this->numberOfIterations - 1)) break;
 
 			double* matrixIndividuals = matTransform->getIndividualsInMatrix(this->population->getIndividuals());	// get a matrix with the individuals
 			this->sendMatrix(3, matrixIndividuals, (size_t) this->populationSize, (size_t) this->qtdGenes); // send matrix with individuals to all slaves
@@ -91,8 +92,6 @@ void SPEA2::run() {
 			vector<double> lvHipervolumes; //to store the hipervolume of each metaheuristic
 			vector< vector<Individual*> > lvIndividuals;// to store individuals of each metaheuristic 
 
-		  /* Wait for a matrix with the hipervolume found
-		  and a population of each slave to continue*/
 			int lvCount = 0;
 			while (lvCount < this->numberOfSlaves) {
 				double* matrixOfEachHeuristic = this->waitMatrixWithHypervolumeForMe(rank, this->populationSize, this->qtdGenes);
@@ -103,8 +102,8 @@ void SPEA2::run() {
 			}
 
 			/*this->fuzzyAbordage(lvHipervolumes, lvIndividuals);*/
-			this->competitiveAbordage(lvHipervolumes, lvIndividuals);
-			/*this->cooperativeAbordage(lvIndividuals);*/
+		/*	this->competitiveAbordage(lvHipervolumes, lvIndividuals);*/
+			this->cooperativeAbordage(lvIndividuals);
 
 			/*clear copys in RT and index*/
 			this->clearVector(RT);
@@ -123,10 +122,9 @@ void SPEA2::run() {
 	}
 
 	if (rank == 0) {
-		/*	cout << "---------------------------------------->" << endl;*/
-		double hp = hypervolume->calculateForTwoObjective(this->archive);
-		cout << hp << endl;
-		dump(archive);
+		/*double hp = hypervolume->calculateForTwoObjective(this->archive);
+		cout << hp << endl;*/
+		dump(archive);	
 		/*fullDump(archive);*/
 	}
 
@@ -207,7 +205,7 @@ void SPEA2::compute_raw(vector<Individual*>& RT) {
 	}
 }
 
-void SPEA2::compute_density(vector<Individual*>& RT) {
+void SPEA2::compute_d(vector<Individual*>& RT) {
 
 	vector< vector<double> > distanceMatrix;
 	size_t sizeOfPopulation = RT.size();
@@ -215,10 +213,8 @@ void SPEA2::compute_density(vector<Individual*>& RT) {
 	orderMatrix(distanceMatrix);
 
 	for (unsigned int i = 0; i < sizeOfPopulation; i++) {
-
-		Individual* individualOne = RT[i];
-		individualOne->setD(1 / (distanceMatrix[i][this->k] + 2));
-		individualOne->setFitness(individualOne->getRaw() + individualOne->getD());
+		RT[i]->setD(1 / (distanceMatrix[i][this->k] + 2));
+		RT[i]->setFitness(RT[i]->getRaw() + RT[i]->getD());
 	}
 }
 
@@ -232,10 +228,10 @@ void SPEA2::fillArchive(vector<Individual*>& RT, vector<Individual*>& archive, v
 	adicionadas no archive pelo index*/
 	while (archive.size() < this->archiveSize) {
 
-		if (!this->contains(index, RT[i])) {//corrigir aqui
-			Individual* ind = new Individual(*RT.at(i));
-			archive.push_back(ind);
-		}
+		/*	if (!this->contains(archive, RT[i])) {*/
+		Individual* ind = new Individual(*RT.at(i));
+		archive.push_back(ind);
+		/*	}*/
 		i++;
 	}
 }
@@ -247,20 +243,20 @@ vector<Individual*> SPEA2::nonDominatedSol(vector<Individual*> individuals) {
 
 	for (unsigned i = 0; i < individuals.size(); i++) {
 
-		bool oneDominated = false;
+		bool isDominatedByLeastOne = false;
 
 		for (j = 0; j < individuals.size(); j++) {
 			if (i != j) {
 				if (this->isDominated(individuals[i], individuals[j])) {
-					oneDominated = true;
+					isDominatedByLeastOne = true;
 					break;
 				}
 			}
 		}
 
-		if (!oneDominated) {
-			Individual* id = new Individual(*(individuals.at(i)));
-			nonDominated.push_back(id);//Verify
+		if (!isDominatedByLeastOne) {
+			Individual* id = new Individual(*individuals.at(i));
+			nonDominated.push_back(id);
 		}
 
 	}
@@ -274,12 +270,12 @@ void SPEA2::getNonDominatedSolutions(vector<Individual*>& index, vector<Individu
 
 	for (unsigned int j = 0; j < RT.size(); j++) {
 
-		Individual* i = new Individual(*RT.at(j));
+		Individual* ind = new Individual(*RT.at(j));
 
-		if (i->getFitness() < 1)
-			newVector.push_back(i);
+		if (ind->getFitness() < 1)
+			newVector.push_back(ind);
 		else
-			delete i;
+			delete ind;
 	}
 
 	index.swap(newVector);
@@ -317,10 +313,10 @@ void SPEA2::clustering(vector<Individual*>& archive, vector<Individual*>& indivi
 	archive.swap(individuos);
 }
 
-void SPEA2::generical_clustering(vector<Individual*>& individuos, int nToRemove) {
+void SPEA2::genericalClustering(vector<Individual*>& individuos, int nToRemove) {
 
 	size_t qtdToRemove = nToRemove;
-	int finalSize = individuos.size() - nToRemove;
+	int finalSize = ((int)individuos.size() - nToRemove);
 
 	while (individuos.size() > (finalSize)) {
 		int pos_one = 0 + (rand() % individuos.size());
@@ -499,11 +495,19 @@ void SPEA2::copyVector(vector<double>& line, vector<double> original, int posIni
 	line.swap(copy);
 }
 
-bool SPEA2::contains(vector<Individual*> vetor, Individual* individual) {
+bool SPEA2::contains(vector<Individual*>& vetor, Individual* individual) {
 
 	for (unsigned int i = 0; i < vetor.size(); i++) {
+		bool flag = true;
 
-		if (&vetor[i] == &individual)
+		for (unsigned int j = 0; j < individual->getAptidao().size(); j++) {
+			if (vetor[i]->getAptidao()[j] != individual->getAptidao()[j]) {
+				flag = false;
+				break;
+			}
+		}
+
+		if (flag)
 			return true;
 	}
 
@@ -523,7 +527,7 @@ void SPEA2::survive(vector<Individual*>& individuals, int n) {
 void SPEA2::dump(vector<Individual*> individuals) {
 
 	/*cout << "\n Population: " << endl;*/
-	for (unsigned int i = 0; i < this->archive.size(); i++) {
+	for (unsigned int i = 0; i < individuals.size(); i++) {
 
 		cout << individuals.at(i)->getAptidao()[0] << ";" << individuals.at(i)->getAptidao()[1] << endl;
 	}
@@ -554,20 +558,6 @@ void SPEA2::dumpIndividual(Individual* ind) {
 		cout << ind->getGenes()[i] << ";";
 	}
 	cout << "" << endl;
-}
-
-void SPEA2::distributeIndividuals(Population* & pop, vector<Population*>& subPopulations)
-{
-	size_t qtdSubPopulations = subPopulations.size();
-	size_t qtdIndividuals = pop->getIndividuals().size();
-
-	for (size_t i = 0; i < qtdSubPopulations; i++) {
-
-		subPopulations[i] = new Population();
-		subPopulations[i]->setSize(qtdIndividuals);
-		subPopulations[i]->getIndividuals().insert(subPopulations[i]->getIndividuals().begin(), population->getIndividuals().begin(),
-			population->getIndividuals().end());
-	}
 }
 
 int SPEA2::getMetaHeuristc()
@@ -610,10 +600,9 @@ string SPEA2::getMetaHeuristcaByNumber(int number)
 
 void SPEA2::competitiveAbordage(vector<double> hipervolumes, vector< vector< Individual*> >& populationsOfEachMetaheuristic)
 {
-	int pos = this->getMaxValuePosition(hipervolumes); // get the position of best hipervolume founded
+	int pos = this->getMaxValuePosition(hipervolumes);
 	double bestHipervolumeFounded = hipervolumes.at(pos);
-
-	//Alter population only if the founded hipervolume was better than old
+	/*cout << bestHipervolumeFounded << " | " << this->lastHipervolume << endl;*/
 	if (bestHipervolumeFounded > this->lastHipervolume) {
 		vector<Individual*> newPop = populationsOfEachMetaheuristic.at(pos);
 		this->clearVector(this->population->getIndividuals());
@@ -621,8 +610,7 @@ void SPEA2::competitiveAbordage(vector<double> hipervolumes, vector< vector< Ind
 		this->lastHipervolume = bestHipervolumeFounded;
 	}
 	else {
-		//to delete all populations obtained by heuristics if their are not used
-		pos = -1;
+		pos = -1; 	//to delete all populations obtained by heuristics if their are not used
 	}
 
 	//desallocating space of not choosen heuristics
@@ -632,6 +620,8 @@ void SPEA2::competitiveAbordage(vector<double> hipervolumes, vector< vector< Ind
 			this->clearVector(populationsOfEachMetaheuristic[i]);
 		}
 	}
+	if (pos == -1)
+		populationsOfEachMetaheuristic.clear();
 }
 
 void SPEA2::fuzzyAbordage(vector<double> hipervolumes, vector<vector<Individual*>>& populationsOfEachMetaheuristic)
@@ -645,23 +635,22 @@ void SPEA2::fuzzyAbordage(vector<double> hipervolumes, vector<vector<Individual*
 
 void SPEA2::cooperativeAbordage(vector< vector<Individual*> >& populationsOfEachMetaheuristic)
 {
-	vector<Individual*> nonDominated;
+	HyperVolumeCalculator* calc = new HyperVolumeCalculator();
+	vector<Individual*> allIndividuals;
 
 	for (size_t i = 0; i < populationsOfEachMetaheuristic.size(); i++) {
-
-		this->copyVectorIndividuals(populationsOfEachMetaheuristic.at(i), nonDominated);
+		this->copyVectorIndividuals(populationsOfEachMetaheuristic.at(i), allIndividuals);
 	}
 
-	this->generical_clustering(nonDominated, (nonDominated.size() - this->populationSize));
-	HyperVolumeCalculator* calc = new HyperVolumeCalculator();
+	this->genericalClustering(allIndividuals, (allIndividuals.size() - this->populationSize));	
+	vector<Individual*> nonDominated = this->nonDominatedSol(allIndividuals);
 	double value = calc->calculateForTwoObjective(nonDominated);
-	delete calc;
-
-	/*if (value < this->lastHipervolume) {*/
-	this->clearVector(this->population->getIndividuals());
-	this->population->setIndividuals(nonDominated);
-	this->lastHipervolume = value;
-	/*}*/
+	
+	if (value > lastHipervolume) {
+		this->clearVector(this->population->getIndividuals());
+		this->population->setIndividuals(allIndividuals);
+		this->lastHipervolume = value;
+	}
 
 	/*desallocating memory of populationsOfEachMetaheuristic,
 	all of used individuals	of this vectors are passed just like copy*/
@@ -669,23 +658,9 @@ void SPEA2::cooperativeAbordage(vector< vector<Individual*> >& populationsOfEach
 		this->clearVector(populationsOfEachMetaheuristic[i]);
 	}
 	populationsOfEachMetaheuristic.clear();
-}
-
-vector<Individual*> SPEA2::cooperativeClustering(vector<Individual*>& individuals, int number)
-{
-	vector<Individual*> newIndividuals;
-	vector< vector<double> > matrix;
-	this->distances(matrix, individuals);
-	int qtd = (this->populationSize / this->qtdMetaHeuristcs);
-	int init = number * qtd;
-
-	for (size_t i = init; i < (init + qtd); i++) {
-
-		Individual* copy = new Individual(*individuals.at(i));
-		newIndividuals.push_back(copy);
-	}
-
-	return newIndividuals;
+	this->clearVector(nonDominated);
+	delete calc;
+	
 }
 
 int SPEA2::comparePopulations(vector< vector< Individual*> >& populationsOfEachMetaheuristic) {
@@ -711,7 +686,6 @@ int SPEA2::randomPosition(int size)
 	return 0 + (rand() % abs(size));;
 }
 
-
 void SPEA2::modifyPopulation(int rank, Population* population) {
 
 	HyperVolumeCalculator* calc = new HyperVolumeCalculator();
@@ -727,8 +701,10 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 		ga->setTheta(0.01);
 		ga->setLimiteInferior(this->limiteInferior);
 		ga->setLimiteSuperior(this->limiteSuperior);
-		ga->run(*toBeModifiedByGA);
-		double hypervolumeFound = calc->calculateForTwoObjective(toBeModifiedByGA->getIndividuals());
+		ga->run(toBeModifiedByGA);
+		vector<Individual*> nonDominated = this->nonDominatedSol(toBeModifiedByGA->getIndividuals());
+		double hypervolumeFound = calc->calculateForTwoObjective(nonDominated);
+		this->clearVector(nonDominated);
 		if (debug) cout << "Finished GA " << hypervolumeFound << endl;
 		double* matrix = mat->getIndividualsInMatrixWithHipervolume(toBeModifiedByGA->getIndividuals(), hypervolumeFound); //first position is hypervolume		
 		MPI_Send(matrix, ((this->populationSize * this->qtdGenes) + 1), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
@@ -741,11 +717,13 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 
 		Population* toBeModifiedByDE = population;
 		DE* de = new DE();
-		de->setCrossoverRate(0.6);
+		de->setCrossoverRate(0.5);
 		de->setLimiteSuperior(this->limiteSuperior);
 		de->setLimiteInferior(this->limiteInferior);
-		de->run(*toBeModifiedByDE);
-		double hypervolumeFound = calc->calculateForTwoObjective(toBeModifiedByDE->getIndividuals());
+		de->run(toBeModifiedByDE);
+		vector<Individual*> nonDominated = this->nonDominatedSol(toBeModifiedByDE->getIndividuals());
+		double hypervolumeFound = calc->calculateForTwoObjective(nonDominated);
+		this->clearVector(nonDominated);
 		if (debug) cout << "Finished DE " << hypervolumeFound << endl;
 		double* matrix = mat->getIndividualsInMatrixWithHipervolume(toBeModifiedByDE->getIndividuals(), hypervolumeFound); //first position is hypervolume		
 		MPI_Send(matrix, ((this->populationSize * this->qtdGenes) + 1), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
@@ -760,8 +738,10 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 		PSO* pso = new PSO();
 		pso->setLimiteInferior(this->limiteInferior);
 		pso->setLimiteSuperior(this->limiteSuperior);
-		pso->run(*toBeModifiedByPSO);
-		double hypervolumeFound = calc->calculateForTwoObjective(toBeModifiedByPSO->getIndividuals());
+		pso->run(toBeModifiedByPSO);
+		vector<Individual*> nonDominated = this->nonDominatedSol(toBeModifiedByPSO->getIndividuals());
+		double hypervolumeFound = calc->calculateForTwoObjective(nonDominated);
+		this->clearVector(nonDominated);
 		if (debug) cout << "Finished PSO " << hypervolumeFound << endl;
 		double* matrix = mat->getIndividualsInMatrixWithHipervolume(toBeModifiedByPSO->getIndividuals(), hypervolumeFound); //first position is hypervolume		
 		MPI_Send(matrix, ((this->populationSize * this->qtdGenes) + 1), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
@@ -773,6 +753,18 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 	delete mat;
 	delete p;
 	delete calc;
+}
+
+bool SPEA2::disperse(vector<Individual*> v, Individual* id) {
+
+	for (size_t i = 0; i < v.size(); i++) {
+
+		if (v.at(i)->getAptidao()[0] == id->getAptidao()[0] && v.at(i)->getAptidao()[1] == id->getAptidao()[1]) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /*--------------------------------------- Communication methods -------------------------------------- */
@@ -840,7 +832,7 @@ void SPEA2::sendMatrix(int numOfProcesses, double * matrix, size_t numLines, siz
 	for (int count = 1; count <= numOfProcesses; count++) {
 		if (debug)
 			cout << "Send matrix to ---> " << count << endl;
-		MPI_Send(matrix, (numLines * numCollums), MPI_DOUBLE, count, count, MPI_COMM_WORLD);
+		MPI_Send(matrix, ((int)(numLines * numCollums)), MPI_DOUBLE, count, count, MPI_COMM_WORLD);
 	}
 }
 
@@ -915,4 +907,16 @@ void SPEA2::copyVectorIndividuals(vector<Individual*>& one, vector<Individual*>&
 	}
 }
 
+void SPEA2::initBounds(double lowerBound, double upperBound)
+{
+	for (int i = 0; i < qtdGenes; i++) {
+		limiteInferior.push_back(lowerBound);
+		limiteSuperior.push_back(upperBound);
+	}
+}
 
+void SPEA2::initBounds()
+{
+	limiteInferior = { 10.0, 10.0, 35.0, 35.0, 130.0 , 125.0 };
+	limiteSuperior = { 125.0, 150.0, 225.0 , 210.0, 325.0, 315.0 };
+}

@@ -17,26 +17,28 @@ class PSO
 public:
 	PSO();
 	~PSO();
-	void run(Population& population);	
-	double getLimiteSuperior();
-	double getLimiteInferior();
-	void setLimiteSuperior(double limiteSuperior);
-	void setLimiteInferior(double limiteInferior);
+	void run(Population* population);	
+	vector<double> getLimiteSuperior();
+	vector<double> getLimiteInferior();
+	void setLimiteSuperior(vector<double> limiteSuperior);
+	void setLimiteInferior(vector<double> limiteInferior);
 	
 private:
 	double w = 0.9;
-	const double c1 = 2;
-	const double c2 = 2;
-	double limiteSuperior;
-	double limiteInferior;
+	const double c1 = 0.5;
+	const double c2 = 0.5;
+	vector<double> limiteSuperior;
+	vector<double> limiteInferior;
 	ZDT* objective;
-	void initPopulation(Population& population);
-	double manterValorNoLimite(double value);
-	double manterValorNoLimiteEed(double value, double limiteInferior, double limiteSuperior);
-	Individual* & getLeader(Population& population);
-	Individual *& getMinFitnessObject(Population & population);
-	Individual *& getLeaderMultiObjective(Population & population);
-	bool isDominated(Individual * one, Individual * two);
-	vector<double> evaluateIndividual(Individual * individual);
+	void initPopulation(Population* population);
+	double keepValuesInBounds(double value, double limiteInferior, double limiteSuperior);
+	Individual *& getLeader(Population* population);
+	Individual *& getMinFitnessObject(Population* population);
+	Individual *& getLeaderMultiObjective(Population* population);
+	bool isDominated(Individual * one, Individual* two);
+	bool nonDominated(Individual * ind, Population * pop);
+	vector<int> identifyExtremalPositions(vector<Individual*> individuals);
+	int getWeakPos(vector<Individual*>& individuals, Individual *ind);
+	vector<double> evaluateIndividual(Individual* individual);
 };
 

@@ -13,19 +13,20 @@ GA::~GA()
 	delete this->objective;
 }
 
-void GA::run(Population& population) {
+void GA::run(Population* population) {
 
-	this->crossover(population);
-	/*this->mutating(population);*/
-	this->mutatingEed(population);
+	for (int i = 0; i < 50; i++) {
+		this->crossover(population);
+		this->mutating(population);		
+	}
 }
 
-double GA::getLimiteInferior()
+vector<double> GA::getLimiteInferior()
 {
 	return this->limiteInferior;
 }
 
-double GA::getlimiteSuperior()
+vector<double> GA::getlimiteSuperior()
 {
 	return this->limiteSuperior;
 }
@@ -35,12 +36,12 @@ double GA::getTheta()
 	return this->theta;
 }
 
-void GA::setLimiteInferior(double limiteInferior)
+void GA::setLimiteInferior(vector<double> limiteInferior)
 {
 	this->limiteInferior = limiteInferior;
 }
 
-void GA::setLimiteSuperior(double limiteSuperior)
+void GA::setLimiteSuperior(vector<double> limiteSuperior)
 {
 	this->limiteSuperior = limiteSuperior;
 }
@@ -84,69 +85,38 @@ vector<Individual*> GA::initPopulation(Population* population, double limiteInfe
 	return population->getIndividuals();
 }
 
-vector<Individual*> GA::mutating(Population& population) {
+vector<Individual*> GA::mutating(Population* population) {
 
-	int numIndividuals = population.getSize();
+	int numIndividuals = population->getSize();
 	int i = 0;
 
 	for (i = 0; i < numIndividuals; i++) {
 
 		double tentative = ((double)rand() / (double)(RAND_MAX)) * 1;
-		Individual* id = population.getIndividuals()[i];
+		Individual* id = population->getIndividuals()[i];
 		double gene = 0;
 
 		if (tentative < this->getMutationRate()) {
 
-			int geneOne = 0 + (rand() % abs(id->getQtdGenes()));
-			gene = geneOne != 0 ? (limiteInferior + (((double)rand() / (double)(RAND_MAX)) * fabs(limiteInferior - limiteSuperior))) :
-				(0 + (((double)rand() / (double)(RAND_MAX)) * (1)));
-			id->getGenes()[geneOne] = gene;
+			int genePosition = 0 + (rand() % abs(id->getQtdGenes()));
+			gene = (limiteInferior[genePosition] + (((double)rand() / (double)(RAND_MAX)) * fabs(limiteInferior[genePosition] - limiteSuperior[genePosition])));
+			id->getGenes()[genePosition] = gene;
 			id->setAptidao(evaluateIndividual(id));
 		}
 	}
 
-	return population.getIndividuals();
+	return population->getIndividuals();
 }
 
-vector<Individual*> GA::mutatingEed(Population& population) {
+vector<Individual*> GA::crossover(Population* population) {
 
-	int numIndividuals = population.getSize();
+	size_t numIndividuals = population->getIndividuals().size();
 	int i = 0;
-	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
-	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
-
-	for (i = 0; i < numIndividuals; i++) {
-
-		double tentative = ((double)rand() / (double)(RAND_MAX)) * 1;
-		Individual* id = population.getIndividuals()[i];
-		double gene = 0;
-
-		if (tentative < this->getMutationRate()) {
-
-			int geneOne = 0 + (rand() % abs(id->getQtdGenes()));
-			gene = (inferiorGenes[geneOne] + (((double)rand() / (double)(RAND_MAX)) * (superiorGenes[geneOne] - inferiorGenes[geneOne])));
-			id->getGenes()[geneOne] = gene;
-			id->setAptidao(evaluateIndividual(id));
-		}
-	}
-
-	return population.getIndividuals();
-}
-
-vector<Individual*> GA::crossover(Population& population) {
-
-	size_t numIndividuals = population.getIndividuals().size();
-	int i = 0;
-	int times = (numIndividuals / 10);
+	int times = (numIndividuals);
 	double lambda = 1;
 
 	double s = 0;
-	double a = 0.1;
-
-	//double inferiorGenes[] = { 5, 5, 5, 5, 5 , 5 };
-	//double superiorGenes[] = { 50, 60, 100 , 120, 100, 60 };
-	double inferiorGenes[] = { 10, 10, 35, 35, 130 , 125 };
-	double superiorGenes[] = { 125, 150, 225 , 210, 325, 315 };
+	double a = 0.5;
 	/*for (i = 0; i < numIndividuals; i++) {
 
 		s += population.getIndividuals().at(i)->getAptidao()[0] + population.getIndividuals().at(i)->getAptidao()[1];
@@ -166,18 +136,18 @@ vector<Individual*> GA::crossover(Population& population) {
 			int moreDivesity = this->roulette(s, population);*/
 			int father = this->tournament(population);
 			int mother = this->tournament(population);
-			int moreDivesity = this->tournament(population);
+			int uncle = this->tournament(population);
 
-			Individual* cromossomeFather = population.getIndividuals()[father];
-			Individual* cromossomeMother = population.getIndividuals()[mother];
-			Individual* cromossomeUncle = population.getIndividuals()[moreDivesity];
-
+			Individual* cromossomeFather = population->getIndividuals()[father];
+			Individual* cromossomeMother = population->getIndividuals()[mother];
+			Individual* cromossomeUncle = population->getIndividuals()[uncle];
 			size_t qtdGenes = cromossomeFather->getGenes().size();
+			
 			son->setQtdGenes(qtdGenes);
 			son2->setQtdGenes(qtdGenes);
 			son3->setQtdGenes(qtdGenes);
 
-			double alpha = random(-a, ((double) 1.0 + a));
+			double alpha = random(-a, (1.0 + a));
 
 			for (int j = 0; j < qtdGenes; j++) {
 
@@ -185,9 +155,9 @@ vector<Individual*> GA::crossover(Population& population) {
 				double gene2 = (alpha * cromossomeMother->getGenes()[j]) + ((1.0 - alpha) *  cromossomeFather->getGenes()[j]);
 				double gene3 = (alpha * cromossomeUncle->getGenes()[j]) + ((1.0 - alpha) * cromossomeMother->getGenes()[j]);
 
-				son->getGenes().push_back(normalize(gene1, inferiorGenes[j], superiorGenes[j]));
-				son2->getGenes().push_back(normalize(gene2, inferiorGenes[j], superiorGenes[j]));
-				son3->getGenes().push_back(normalize(gene3, inferiorGenes[j], superiorGenes[j]));
+				son->getGenes().push_back(normalize(gene1, limiteInferior[j], limiteSuperior[j]));
+				son2->getGenes().push_back(normalize(gene2, limiteInferior[j], limiteSuperior[j]));
+				son3->getGenes().push_back(normalize(gene3, limiteInferior[j], limiteSuperior[j]));
 			}
 
 			son->setAptidao(evaluateIndividual(son));
@@ -195,30 +165,42 @@ vector<Individual*> GA::crossover(Population& population) {
 			son3->setAptidao(evaluateIndividual(son3));
 
 			if (isDominated(cromossomeFather, son)) {
-				population.getIndividuals()[father]->setAptidao(son->getAptidao());
-				population.getIndividuals()[father]->setGenes(son->getGenes());
+				population->getIndividuals()[father]->setAptidao(son->getAptidao());
+				population->getIndividuals()[father]->setGenes(son->getGenes());
 			}
 			else if (isDominated(cromossomeMother, son)) {
-				population.getIndividuals()[mother]->setAptidao(son->getAptidao());
-				population.getIndividuals()[mother]->setGenes(son->getGenes());
+				population->getIndividuals()[mother]->setAptidao(son->getAptidao());
+				population->getIndividuals()[mother]->setGenes(son->getGenes());
+			}
+			else if (isDominated(cromossomeUncle, son)) {
+				population->getIndividuals()[uncle]->setAptidao(son->getAptidao());
+				population->getIndividuals()[uncle]->setGenes(son->getGenes());
 			}
 
 			if (isDominated(cromossomeMother, son2)) {
-				population.getIndividuals()[mother]->setAptidao(son2->getAptidao());
-				population.getIndividuals()[mother]->setGenes(son2->getGenes());
+				population->getIndividuals()[mother]->setAptidao(son2->getAptidao());
+				population->getIndividuals()[mother]->setGenes(son2->getGenes());
 			}
 			else if (isDominated(cromossomeFather, son2)) {
-				population.getIndividuals()[father]->setAptidao(son2->getAptidao());
-				population.getIndividuals()[father]->setGenes(son2->getGenes());
+				population->getIndividuals()[father]->setAptidao(son2->getAptidao());
+				population->getIndividuals()[father]->setGenes(son2->getGenes());
+			}
+			else if (isDominated(cromossomeUncle, son2)) {
+				population->getIndividuals()[uncle]->setAptidao(son2->getAptidao());
+				population->getIndividuals()[uncle]->setGenes(son2->getGenes());
 			}
 
 			if (isDominated(cromossomeFather, son3)) {
-				population.getIndividuals()[father]->setAptidao(son3->getAptidao());
-				population.getIndividuals()[father]->setGenes(son3->getGenes());
+				population->getIndividuals()[father]->setAptidao(son3->getAptidao());
+				population->getIndividuals()[father]->setGenes(son3->getGenes());
 			}
 			else if (isDominated(cromossomeMother, son3)) {
-				population.getIndividuals()[mother]->setAptidao(son3->getAptidao());
-				population.getIndividuals()[mother]->setGenes(son3->getGenes());
+				population->getIndividuals()[mother]->setAptidao(son3->getAptidao());
+				population->getIndividuals()[mother]->setGenes(son3->getGenes());
+			}
+			else if (isDominated(cromossomeUncle, son3)) {
+				population->getIndividuals()[uncle]->setAptidao(son3->getAptidao());
+				population->getIndividuals()[uncle]->setGenes(son3->getGenes());
 			}
 
 			delete son;
@@ -227,12 +209,12 @@ vector<Individual*> GA::crossover(Population& population) {
 		}
 	}
 
-	return population.getIndividuals();
+	return population->getIndividuals();
 }
 
-vector<Individual*> GA::minimizerCrossover(Population& population) {
+vector<Individual*> GA::minimizerCrossover(Population* population) {
 
-	size_t numIndividuals = population.getIndividuals().size();
+	size_t numIndividuals = population->getIndividuals().size();
 	int i = 0;
 	double gamma = 1;
 	double lambda = 1;
@@ -242,7 +224,7 @@ vector<Individual*> GA::minimizerCrossover(Population& population) {
 
 	for (i = 0; i < numIndividuals; i++) {
 
-		s += population.getIndividuals().at(i)->getAptidao()[0] + population.getIndividuals().at(i)->getAptidao()[1];
+		s += population->getIndividuals().at(i)->getAptidao()[0] + population->getIndividuals().at(i)->getAptidao()[1];
 	}
 
 	for (i = 0; i < numIndividuals; i++) {
@@ -258,9 +240,9 @@ vector<Individual*> GA::minimizerCrossover(Population& population) {
 			int mother = this->roulette(s, population);
 			int moreDivesity = this->roulette(s, population);
 
-			Individual* cromossomeFather = population.getIndividuals()[father];
-			Individual* cromossomeMother = population.getIndividuals()[mother];
-			Individual* cromossomeUncle = population.getIndividuals()[moreDivesity];
+			Individual* cromossomeFather = population->getIndividuals()[father];
+			Individual* cromossomeMother = population->getIndividuals()[mother];
+			Individual* cromossomeUncle = population->getIndividuals()[moreDivesity];
 
 			size_t qtdGenes = cromossomeFather->getGenes().size();
 			son->setQtdGenes(qtdGenes);
@@ -275,9 +257,9 @@ vector<Individual*> GA::minimizerCrossover(Population& population) {
 				double gene2 = (alpha * cromossomeMother->getGenes()[j]) + ((1.0 - alpha) *  cromossomeFather->getGenes()[j]);
 				double gene3 = (alpha * cromossomeFather->getGenes()[j]) + ((1.0 - alpha) * cromossomeUncle->getGenes()[j]);
 
-				son->getGenes().push_back(normalize(gene1));
-				son2->getGenes().push_back(normalize(gene2));
-				son3->getGenes().push_back(normalize(gene3));
+				son->getGenes().push_back(normalize(gene1, limiteInferior[j], limiteSuperior[j]));
+				son2->getGenes().push_back(normalize(gene2, limiteInferior[j], limiteSuperior[j]));
+				son3->getGenes().push_back(normalize(gene3, limiteInferior[j], limiteSuperior[j]));
 
 			}
 
@@ -285,37 +267,37 @@ vector<Individual*> GA::minimizerCrossover(Population& population) {
 			son2->setAptidao(evaluateIndividual(son2));
 			son3->setAptidao(evaluateIndividual(son3));
 
-			if (son->getAptidao() < population.getIndividuals()[father]->getAptidao()) {
+			if (son->getAptidao() < population->getIndividuals()[father]->getAptidao()) {
 
-				population.getIndividuals()[father]->setAptidao(son->getAptidao());
-				population.getIndividuals()[father]->setGenes(son->getGenes());
+				population->getIndividuals()[father]->setAptidao(son->getAptidao());
+				population->getIndividuals()[father]->setGenes(son->getGenes());
 			}
-			else if (son->getAptidao() < population.getIndividuals()[mother]->getAptidao()) {
+			else if (son->getAptidao() < population->getIndividuals()[mother]->getAptidao()) {
 
-				population.getIndividuals()[mother]->setAptidao(son->getAptidao());
-				population.getIndividuals()[mother]->setGenes(son->getGenes());
-			}
-
-			if (son2->getAptidao() < population.getIndividuals()[mother]->getAptidao()) {
-
-				population.getIndividuals()[mother]->setAptidao(son2->getAptidao());
-				population.getIndividuals()[mother]->setGenes(son2->getGenes());
-			}
-			else if (son2->getAptidao() < population.getIndividuals()[father]->getAptidao()) {
-
-				population.getIndividuals()[father]->setAptidao(son2->getAptidao());
-				population.getIndividuals()[father]->setGenes(son2->getGenes());
+				population->getIndividuals()[mother]->setAptidao(son->getAptidao());
+				population->getIndividuals()[mother]->setGenes(son->getGenes());
 			}
 
-			if (son3->getAptidao() < population.getIndividuals()[father]->getAptidao()) {
+			if (son2->getAptidao() < population->getIndividuals()[mother]->getAptidao()) {
 
-				population.getIndividuals()[father]->setAptidao(son3->getAptidao());
-				population.getIndividuals()[father]->setGenes(son3->getGenes());
+				population->getIndividuals()[mother]->setAptidao(son2->getAptidao());
+				population->getIndividuals()[mother]->setGenes(son2->getGenes());
 			}
-			else if (son3->getAptidao() < population.getIndividuals()[mother]->getAptidao()) {
+			else if (son2->getAptidao() < population->getIndividuals()[father]->getAptidao()) {
 
-				population.getIndividuals()[mother]->setAptidao(son3->getAptidao());
-				population.getIndividuals()[mother]->setGenes(son3->getGenes());
+				population->getIndividuals()[father]->setAptidao(son2->getAptidao());
+				population->getIndividuals()[father]->setGenes(son2->getGenes());
+			}
+
+			if (son3->getAptidao() < population->getIndividuals()[father]->getAptidao()) {
+
+				population->getIndividuals()[father]->setAptidao(son3->getAptidao());
+				population->getIndividuals()[father]->setGenes(son3->getGenes());
+			}
+			else if (son3->getAptidao() < population->getIndividuals()[mother]->getAptidao()) {
+
+				population->getIndividuals()[mother]->setAptidao(son3->getAptidao());
+				population->getIndividuals()[mother]->setGenes(son3->getGenes());
 			}
 
 			delete son;
@@ -324,27 +306,27 @@ vector<Individual*> GA::minimizerCrossover(Population& population) {
 		}
 	}
 
-	return population.getIndividuals();
+	return population->getIndividuals();
 }
 
-int GA::roulette(double s, Population& population) {
+int GA::roulette(double s, Population* population) {
 
-	size_t numIndividuals = population.getIndividuals().size();
+	size_t numIndividuals = population->getIndividuals().size();
 	double soma = 0;
 	double r = ((double)rand() / (double)(RAND_MAX)) * s;
 
 	for (int i = 0; i < numIndividuals; i++) {
 
-		soma += population.getIndividuals().at(i)->getAptidao()[0] + population.getIndividuals().at(i)->getAptidao()[1];
+		soma += population->getIndividuals().at(i)->getAptidao()[0] + population->getIndividuals().at(i)->getAptidao()[1];
 		if (soma > r)
 			return i;
 	}
-	return (0 + (rand() % abs(population.getIndividuals().at(0)->getQtdGenes())));
+	return (0 + (rand() % abs(population->getIndividuals().at(0)->getQtdGenes())));
 }
 
-int GA::tournament(Population& population) {
+int GA::tournament(Population* population) {
 
-	int size = population.getIndividuals().size();
+	int size = population->getIndividuals().size();
 	int choosed = 0, firstWinner = 0, secondWinner = 0, thirdWinner = 0, fourthWinner = 0, finalist_one, finalist_two;
 	int pos1 = 0 + (rand() % abs(size));
 	int pos2 = 0 + (rand() % abs(size));
@@ -355,21 +337,21 @@ int GA::tournament(Population& population) {
 	int pos7 = 0 + (rand() % abs(size));
 	int pos8 = 0 + (rand() % abs(size));
 
-	if (isDominated(population.getIndividuals()[pos1], population.getIndividuals()[pos2])) {
+	if (isDominated(population->getIndividuals()[pos1], population->getIndividuals()[pos2])) {
 		firstWinner = pos2;
 	}
 	else {
 		firstWinner = pos1;
 	}
 
-	if (isDominated(population.getIndividuals()[pos3], population.getIndividuals()[pos4])) {
+	if (isDominated(population->getIndividuals()[pos3], population->getIndividuals()[pos4])) {
 		secondWinner = pos4;
 	}
 	else {
 		secondWinner = pos3;
 	}
 
-	if (isDominated(population.getIndividuals()[firstWinner], population.getIndividuals()[secondWinner])) {
+	if (isDominated(population->getIndividuals()[firstWinner], population->getIndividuals()[secondWinner])) {
 		finalist_one = secondWinner;
 	}
 	else {
@@ -378,34 +360,34 @@ int GA::tournament(Population& population) {
 
 	//second group
 
-	if (isDominated(population.getIndividuals()[pos5], population.getIndividuals()[pos6])) {
+	if (isDominated(population->getIndividuals()[pos5], population->getIndividuals()[pos6])) {
 		thirdWinner = pos6;
 	}
 	else {
 		thirdWinner = pos5;
 	}
 
-	if (isDominated(population.getIndividuals()[pos7], population.getIndividuals()[pos8])) {
+	if (isDominated(population->getIndividuals()[pos7], population->getIndividuals()[pos8])) {
 		fourthWinner = pos8;
 	}
 	else {
 		fourthWinner = pos7;
 	}
 
-	if (isDominated(population.getIndividuals()[thirdWinner], population.getIndividuals()[fourthWinner])) {
+	if (isDominated(population->getIndividuals()[thirdWinner], population->getIndividuals()[fourthWinner])) {
 		finalist_two = fourthWinner;
 	}
 	else {
 		finalist_two = thirdWinner;
 	}
 
-	if (isDominated(population.getIndividuals()[finalist_two], population.getIndividuals()[finalist_one])) {
+	if (isDominated(population->getIndividuals()[finalist_two], population->getIndividuals()[finalist_one])) {
 		choosed = finalist_one;
 	}
 	else {
 		choosed = finalist_two;
 	}
-
+		
 	return choosed;
 }
 
@@ -431,16 +413,6 @@ double GA::max(double x1, double x2) {
 double GA::random(double min, double max) {
 
 	return (min + (((double)rand() / (double)(RAND_MAX)) * max));
-}
-
-double GA::normalize(double value)
-{
-	if (value < this->limiteInferior)
-		return limiteInferior;
-	else if (value > this->limiteSuperior)
-		return limiteSuperior;
-
-	return value;
 }
 
 double GA::normalize(double value, double lowerBound, double upperBound) {
@@ -487,6 +459,43 @@ bool GA::isDominated(Individual * one, Individual * two)
 	}
 
 	return anyDominate;
+}
+
+void GA::nonDominated(vector<Individual*> inds, Population* pop) {
+
+	unsigned j = 0;
+	vector<bool>flag(inds.size());
+
+	for (j = 0; j < pop->getIndividuals().size(); j++) {
+
+		for (unsigned int i = 0; i < inds.size(); i++) {
+			if (this->isDominated(inds[i], pop->getIndividuals()[j])) {
+				flag[i] = true;
+				continue;
+			}
+		}
+	}
+
+	for (unsigned int i = 0; i < inds.size(); i++) {
+
+		if (!inds.at(i)) {
+			int pos = getWeakPos(pop->getIndividuals(), inds[i]);
+			pop->getIndividuals()[pos]->setAptidao(inds[i]->getAptidao());
+			pop->getIndividuals()[pos]->setGenes(inds[i]->getGenes());
+		}
+	}
+
+}
+
+int GA::getWeakPos(vector<Individual*>& individuals, Individual* ind) {
+
+	for (unsigned int i = 0; i < individuals.size(); i++) {
+		if (isDominated(individuals[i], ind)) {
+			return i;
+		}
+	}
+
+	return  0 + (rand() % individuals.size());
 }
 
 void GA::setMutationRate(double mutationRate) {
