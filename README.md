@@ -4,7 +4,9 @@ Use different approaches to modify the population:
 
 #Cooperative
   -> Execute GA, PSO and DE and chooses good individuals of all three.
-#Compettive
+  
+#Competitive
   -> Get the population of best hipervolume
+  
 #Fuzzy
   -> Use the difference between real hipervolum and the funded by algorithm.
