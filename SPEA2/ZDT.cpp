@@ -55,17 +55,17 @@ vector<double> ZDT::evaluateIndividual(Individual* i) {
 
 	/* ------------------------ zdt4 ---------------------- */
 
-	//double f1 = i->getGenes()[0];
-	//double somatoria = 0.0;
-	//int n = i->getGenes().size();
+	double f1 = i->getGenes()[0];
+	double somatoria = 0.0;
+	int n = i->getGenes().size();
 
-	//for (int j = 1; j < n; j++) {
-	//	double x = i->getGenes()[j];
-	//	somatoria += pow(x, 2) - (10.0 * cos(4 * PI * x));
-	//}
-	//double g = 91 + somatoria;
-	//double  h = 1 - std::sqrt(f1 / g);
-	//double f2 = g * h;
+	for (int j = 1; j < n; j++) {
+		double x = i->getGenes()[j];
+		somatoria += pow(x, 2) - (10.0 * cos(4 * PI * x));
+	}
+	double g = 91 + somatoria;
+	double  h = 1 - std::sqrt(f1 / g);
+	double f2 = g * h;
 
 	/* ------------------------ zdt6 ---------------------- */
 
@@ -122,30 +122,30 @@ vector<double> ZDT::evaluateIndividual(Individual* i) {
 	double f2 = 1 - exp(somatorio);*/
 
 	/* ------------------------ Environmental Economic Dispatch ---------------------- */
-	size_t n = i->getGenes().size();
-	double a[] = { 0.01, 0.012, 0.004, 0.006, 0.004, 0.01 };
-	double b[] = { 2, 1.5, 1.8, 1.0, 1.8, 1.5 };
-	double c[] = { 10, 10, 20, 10, 20, 10 };
+	//size_t n = i->getGenes().size();
+	//double a[] = { 0.01, 0.012, 0.004, 0.006, 0.004, 0.01 };
+	//double b[] = { 2, 1.5, 1.8, 1.0, 1.8, 1.5 };
+	//double c[] = { 10, 10, 20, 10, 20, 10 };
 
-	double alpha[] = { 0.00419, 0.00419, 0.00683, 0.00683, 0.00461, 0.00461 };
-	double beta[] = { 0.32767, 0.32767, -0.545514, -0.54551, -0.51116, -0.51116 };
-	double gamma[] = { 13.85932, 13.85932, 40.26690, 40.26690, 42.89553, 42.89553 };
+	//double alpha[] = { 0.00419, 0.00419, 0.00683, 0.00683, 0.00461, 0.00461 };
+	//double beta[] = { 0.32767, 0.32767, -0.545514, -0.54551, -0.51116, -0.51116 };
+	//double gamma[] = { 13.85932, 13.85932, 40.26690, 40.26690, 42.89553, 42.89553 };
 
-	double f1 = 0;
-	double f2 = 0;
-	double sumP = 0;
+	//double f1 = 0;
+	//double f2 = 0;
+	//double sumP = 0;
 
-	for (size_t j = 0; j < n; j++) {
-		sumP += i->getGenes()[j];
-		f1 += (a[j] * pow(i->getGenes()[j], 2)) + (b[j] * i->getGenes()[j]) + c[j];
-		f2 += (alpha[j] * pow(i->getGenes()[j], 2)) + (beta[j] * i->getGenes()[j]) + gamma[j];
-	}
+	//for (size_t j = 0; j < n; j++) {
+	//	sumP += i->getGenes()[j];
+	//	f1 += (a[j] * pow(i->getGenes()[j], 2)) + (b[j] * i->getGenes()[j]) + c[j];
+	//	f2 += (alpha[j] * pow(i->getGenes()[j], 2)) + (beta[j] * i->getGenes()[j]) + gamma[j];
+	//}
 
-	//constraint
-	if (sumP < 700) {
-		f1 += 100000;
-		f2 += 100000;
-	}	
+	////constraint
+	//if (sumP < 700) {
+	//	f1 += 100000;
+	//	f2 += 100000;
+	//}
 	/* ------------------------ to be returned (f1 and f2 must be created and filled) ---------------------- */
 	vector<double> aptidoes;
 	aptidoes.push_back(f1);

@@ -45,7 +45,7 @@ class SPEA2
         static const int numberOfIterations = 100;
         static const int archiveSize = 50;
         static const int populationSize = 300;
-        static const int qtdGenes = 6;		
+        static const int qtdGenes = 30;		
 		static const int qtdThreads = 4;
 		static const int numberOfSlaves = 3;
 		static const int qtdMetaHeuristcs = 3;		

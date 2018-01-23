@@ -102,8 +102,8 @@ void SPEA2::run() {
 			}
 
 			/*this->fuzzyAbordage(lvHipervolumes, lvIndividuals);*/
-		/*	this->competitiveAbordage(lvHipervolumes, lvIndividuals);*/
-			this->cooperativeAbordage(lvIndividuals);
+			this->competitiveAbordage(lvHipervolumes, lvIndividuals);
+			/*this->cooperativeAbordage(lvIndividuals);*/
 
 			/*clear copys in RT and index*/
 			this->clearVector(RT);
@@ -917,6 +917,6 @@ void SPEA2::initBounds(double lowerBound, double upperBound)
 
 void SPEA2::initBounds()
 {
-	limiteInferior = { 10.0, 10.0, 35.0, 35.0, 130.0 , 125.0 };
-	limiteSuperior = { 125.0, 150.0, 225.0 , 210.0, 325.0, 315.0 };
+	limiteInferior = { 0, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5};
+	limiteSuperior = { 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
 }

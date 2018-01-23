@@ -37,7 +37,7 @@ double HyperVolumeCalculator::calculateForTwoObjective(vector<Individual*> indiv
 	vector<double> extremalPoints = identifyExtremalPoints(individuals);
 	this->referenceOne = extremalPoints.at(0);
 	this->referenceTwo = extremalPoints.at(1);
-	
+
 	for (size_t i = 0; i < individuals.size(); i++) {
 
 		double height = fabs(referenceOne - individuals[i]->getAptidao()[0]);
@@ -49,6 +49,43 @@ double HyperVolumeCalculator::calculateForTwoObjective(vector<Individual*> indiv
 	}
 
 	return hypervolume;
+}
+
+double HyperVolumeCalculator::calculateSpread(vector<Individual*> individuals) {
+
+	sort(individuals.begin(), individuals.end(), compareByFirstObjective);
+
+	int individualsSize = individuals.size();
+	vector<double> distances(individualsSize - 1); //verify memory use later
+	size_t genesSize = individuals.at(0)->getGenes().size();
+	double sum = 0;
+	double mean = 0;
+	double diversitySum = 0;
+	vector<double> desiredFirst = { 0.0000000333,0.9998173820 };
+	vector<double> desiredLast = { 1.0000000000,0.0000000000 };
+	double df = 0;
+	double dl = 0;
+
+	for (size_t i = 0; i < (individualsSize - 1); i++) {
+		sum = 0;
+		for (size_t k = 0; k < genesSize; k++)
+			sum += pow(fabs(individuals.at(i)->getAptidao()[k] - individuals.at(i + 1)->getAptidao()[k]), 2);
+
+		double euclidean = sqrt(sum);
+		distances.at(i) = euclidean;
+		mean += euclidean;
+	}
+
+	df = euclideanDistance(individuals.at(0)->getAptidao(), desiredFirst);
+	dl = euclideanDistance(individuals.at(individuals.size() - 1)->getAptidao(), desiredLast);
+	diversitySum = df + dl;
+	mean /= (double)individualsSize;
+
+	for (size_t i = 0; i < (individualsSize - 1); i++) {
+		diversitySum += fabs(distances.at(i) - mean);
+	}
+
+	return diversitySum / df + dl + (individuals.size() - 1) * mean;
 }
 
 vector<double> HyperVolumeCalculator::differenceBetweenExtremalPointsAndReference(vector<Individual*> individuals)
@@ -86,4 +123,13 @@ vector<double> HyperVolumeCalculator::identifyExtremalPoints(vector<Individual*>
 	extremalPoints.push_back(referenceTwo);
 
 	return extremalPoints;
+}
+
+double HyperVolumeCalculator::euclideanDistance(vector<double> one, vector<double> two)
+{
+	double sum = 0;
+	for (size_t i = 0; i < one.size(); i++) {
+		sum += pow(fabs(one[i] - two[i]), 2);
+	}
+	return sqrt(sum);
 }

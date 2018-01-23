@@ -26,14 +26,14 @@ int main(int argc, char* argv[])
 		Departamento Acadêmico de Informatica
 	*/
 
-	TestUtil t;
+	/*TestUtil t;
 	t.run();
-	getchar();
+	getchar();*/
 
 
-	/*srand((unsigned int)time(NULL));*/
+	srand((unsigned int)time(NULL));
 
-	/*int rank = 0;
+	int rank = 0;
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 	if (rank == 0) {
 		cout << "FIM" << endl;
 		std::getchar();
-	}*/
+	}
 
 	return 0;
 }
