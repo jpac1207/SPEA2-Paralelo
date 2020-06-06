@@ -26,6 +26,7 @@ public:
 	double getCrossoverRate();
 	void setObjective(ZDT* obj);
 private:
+	const int numberOfIterations = 30;
 	vector<double> limiteInferior;
 	vector<double> limiteSuperior;
 	double crossoverRate;

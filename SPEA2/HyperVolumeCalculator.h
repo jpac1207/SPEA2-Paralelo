@@ -16,6 +16,7 @@ public:
 	HyperVolumeCalculator();
 	~HyperVolumeCalculator();
 	double calculateForTwoObjective(vector<Individual*> individuals);
+	double calculateForTwoObjectiveWithExtremalReferences(vector<Individual*> individuals, vector<Individual*> completePopulation);
 	double calculateSpread(vector<Individual*> individuals);
 	vector<double> differenceBetweenExtremalPointsAndReference(vector<Individual*> individuals);
 	vector<double> identifyExtremalPoints(vector<Individual*> individuals);

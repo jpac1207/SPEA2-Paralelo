@@ -16,11 +16,21 @@ void TestUtil::run()
 	PopulationReader* p = new PopulationReader();	
 	vector<Individual*> individuals = p->loadFromArquive("individuals.txt");
 	
-	if (individuals.size() > 0) {
-		vector<Individual*>nonDominatedSolutions = nonDominatedSol(individuals);
+	/*if (individuals.size() > 0) {
 		HyperVolumeCalculator h;
-		cout << h.calculateForTwoObjective(nonDominatedSolutions) << endl;
+		vector<Individual*>nonDominatedSolutions = nonDominatedSol(individuals);		
+		cout << h.calculateForTwoObjectiveWithExtremalReferences(nonDominatedSolutions, individuals) << endl;
 		dump(nonDominatedSolutions);
+		clearVector(nonDominatedSolutions);
+		clearVector(individuals);
+	}*/
+
+
+	if (individuals.size() > 0) {
+		HyperVolumeCalculator h;
+		vector<Individual*>nonDominatedSolutions = nonDominatedSol(individuals);		
+		cout << h.calculateSpread(nonDominatedSolutions) << endl;		
+		/*dump(nonDominatedSolutions);*/
 		clearVector(nonDominatedSolutions);
 		clearVector(individuals);
 	}

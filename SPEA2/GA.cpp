@@ -15,7 +15,7 @@ GA::~GA()
 
 void GA::run(Population* population) {
 
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < numberOfIterations; i++) {
 		this->crossover(population);
 		this->mutating(population);		
 	}

@@ -13,6 +13,7 @@
 //#include<cstdlib>
 //#include<ctime>
 #include"mpi.h"
+#include <time.h>
 
 #include"ObjectiveFunction.h"
 #include"ZDT.h"
@@ -36,16 +37,17 @@ class SPEA2
 		SPEA2(int rank);
         virtual ~SPEA2();
         void run();
+		void runSingle();
 		
 
     protected:
 		static const bool debug = false;
 		
     private:
-        static const int numberOfIterations = 100;
+        static const int numberOfIterations = 300;
         static const int archiveSize = 50;
-        static const int populationSize = 300;
-        static const int qtdGenes = 30;		
+        static const int populationSize = 1500;
+        static const int qtdGenes = 40;		
 		static const int qtdThreads = 4;
 		static const int numberOfSlaves = 3;
 		static const int qtdMetaHeuristcs = 3;		
@@ -95,6 +97,8 @@ class SPEA2
 		int randomPosition(Population* & pop);
 		int randomPosition(int size);
 		void modifyPopulation(int rank, Population* population);
+		vector< vector<Individual*> > modifyPopulationSingle(Population* population);
+		vector<double> calcHiperVolume(vector< vector<Individual*> >& individualsOffAllMetaheuristics);
 		bool disperse(vector<Individual*> v, Individual * id);
 		void sendMessage(int numOfProcesses);
 		double receiveMessage();

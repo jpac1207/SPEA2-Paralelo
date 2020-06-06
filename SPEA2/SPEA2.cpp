@@ -51,6 +51,7 @@ void SPEA2::run() {
 	this->objective = new ZDT();
 	this->population = new Population();
 	this->population->setSize(this->populationSize);
+	/*this->initBounds(0, 1);*/
 	this->initBounds();
 	this->population->initPopulation(this->limiteInferior, this->limiteSuperior, this->qtdGenes);
 	this->archive = this->nonDominatedSol(this->population->getIndividuals());
@@ -61,7 +62,6 @@ void SPEA2::run() {
 	for (int i = 0; i < this->numberOfIterations; i++) {
 
 		if (this->rank == 0) {
-
 			this->clearVector(this->RT);
 			RT = this->fillRT(population->getIndividuals(), archive);
 			this->compute_s(RT);
@@ -86,6 +86,7 @@ void SPEA2::run() {
 			if (i == (this->numberOfIterations - 1)) break;
 
 			double* matrixIndividuals = matTransform->getIndividualsInMatrix(this->population->getIndividuals());	// get a matrix with the individuals
+
 			this->sendMatrix(3, matrixIndividuals, (size_t) this->populationSize, (size_t) this->qtdGenes); // send matrix with individuals to all slaves
 			free(matrixIndividuals);
 
@@ -94,38 +95,93 @@ void SPEA2::run() {
 
 			int lvCount = 0;
 			while (lvCount < this->numberOfSlaves) {
+
 				double* matrixOfEachHeuristic = this->waitMatrixWithHypervolumeForMe(rank, this->populationSize, this->qtdGenes);
-				lvHipervolumes.push_back(matrixOfEachHeuristic[0]); // get the hipervolume founded			
+				lvHipervolumes.push_back(matrixOfEachHeuristic[0]); // get the hipervolume founded						
 				lvIndividuals.push_back(matTransform->getIndividualsInVectorWithHipervolume(matrixOfEachHeuristic, this->populationSize, this->qtdGenes));
 				free(matrixOfEachHeuristic);
 				lvCount++;
 			}
 
 			/*this->fuzzyAbordage(lvHipervolumes, lvIndividuals);*/
-			this->competitiveAbordage(lvHipervolumes, lvIndividuals);
-			/*this->cooperativeAbordage(lvIndividuals);*/
+		/*	this->competitiveAbordage(lvHipervolumes, lvIndividuals);*/
+			this->cooperativeAbordage(lvIndividuals);
 
 			/*clear copys in RT and index*/
 			this->clearVector(RT);
 			this->clearVector(index);
 		}
 		else {
-
 			if (i == (this->numberOfIterations - 1)) break;
-
 			double* matrixIndividual = this->waitMatrixForMe(rank, (size_t) this->populationSize, (size_t) this->qtdGenes); // wait matrix of master
 			this->clearVector(this->population->getIndividuals());
 			this->population->setIndividuals(matTransform->getIndividualsInVector(matrixIndividual, this->populationSize, this->qtdGenes)); //get population saved for master					
-			this->modifyPopulation(rank, population); //Modify the population, save and notify master		
+			this->modifyPopulation(rank, population); //Modify the population, save and notify master	
 			free(matrixIndividual);
 		}
 	}
 
 	if (rank == 0) {
-		/*double hp = hypervolume->calculateForTwoObjective(this->archive);
-		cout << hp << endl;*/
-		dump(archive);	
+		double hp = hypervolume->calculateForTwoObjective(this->archive);
+		/*cout << hp << endl;*/
+		/*dump(archive);*/
 		/*fullDump(archive);*/
+	}
+
+	this->clearVector(RT);//clear copys in RT	
+	this->clearVector(index);
+	delete hypervolume;
+	delete matTransform;
+}
+
+void SPEA2::runSingle()
+{
+	this->lastHipervolume = 0.0;
+	this->objective = new ZDT();
+	this->population = new Population();
+	this->population->setSize(this->populationSize);
+	/*this->initBounds(0, 1);*/
+	this->initBounds();
+	this->population->initPopulation(this->limiteInferior, this->limiteSuperior, this->qtdGenes);
+	this->archive = this->nonDominatedSol(this->population->getIndividuals());
+	HyperVolumeCalculator* hypervolume = new HyperVolumeCalculator();
+	MatTransform* matTransform = new MatTransform();
+	this->lastHipervolume = hypervolume->calculateForTwoObjective(this->archive);
+
+	for (int i = 0; i < this->numberOfIterations; i++) {
+
+		this->clearVector(this->RT);
+		RT = this->fillRT(population->getIndividuals(), archive);
+		this->compute_s(RT);
+		this->compute_raw(RT);
+		this->compute_d(RT);
+		this->clearVector(archive);
+		this->clearVector(index);
+
+		this->getNonDominatedSolutions(index, RT);
+
+		if (index.size() == this->archiveSize) {
+			this->copyVectorIndividuals(index, archive);
+		}
+		else if (index.size() < this->archiveSize) {
+			this->copyVectorIndividuals(index, archive);
+			this->fillArchive(RT, this->archive, index);
+		}
+		else {
+			this->clustering(this->archive, index);
+		}
+
+		if (i == (this->numberOfIterations - 1)) break;
+		vector< vector<Individual*> > lvIndividuals = modifyPopulationSingle(this->population);// to store individuals of each metaheuristic 				
+		vector<double> lvHipervolumes = calcHiperVolume(lvIndividuals); //to store the hipervolume of each metaheuristic			
+
+		/*this->fuzzyAbordage(lvHipervolumes, lvIndividuals);*/
+		/*this->competitiveAbordage(lvHipervolumes, lvIndividuals);*/
+		this->cooperativeAbordage(lvIndividuals);
+
+		/*clear copys in RT and index*/
+		this->clearVector(RT);
+		this->clearVector(index);
 	}
 
 	this->clearVector(RT);//clear copys in RT	
@@ -141,14 +197,12 @@ bool SPEA2::isDominated(Individual* one, Individual* two) {
 	for (size_t i = 0; i < one->getAptidao().size(); i++) {
 
 		if (this->objective->isMinimization(i)) {
-
 			if (one->getAptidao()[i] < two->getAptidao()[i])
 				return false;
 			else if (one->getAptidao()[i] > two->getAptidao()[i])
 				anyDominate = true;
 		}
 		else {
-
 			if (one->getAptidao()[i] > two->getAptidao()[i])
 				return false;
 			else if (one->getAptidao()[i] < two->getAptidao()[i])
@@ -194,7 +248,6 @@ void SPEA2::compute_s(vector<Individual*>& RT) {
 void SPEA2::compute_raw(vector<Individual*>& RT) {
 
 	for (unsigned int i = 0; i < RT.size(); i++) {
-
 		for (unsigned int j = i + 1; j < RT.size(); j++) {
 
 			if (this->isDominated(RT.at(i), RT.at(j)))// se i for dominado por j
@@ -239,13 +292,12 @@ void SPEA2::fillArchive(vector<Individual*>& RT, vector<Individual*>& archive, v
 vector<Individual*> SPEA2::nonDominatedSol(vector<Individual*> individuals) {
 
 	vector<Individual*> nonDominated;
-	unsigned j = 0;
 
 	for (unsigned i = 0; i < individuals.size(); i++) {
 
 		bool isDominatedByLeastOne = false;
 
-		for (j = 0; j < individuals.size(); j++) {
+		for (unsigned j = 0; j < individuals.size(); j++) {
 			if (i != j) {
 				if (this->isDominated(individuals[i], individuals[j])) {
 					isDominatedByLeastOne = true;
@@ -258,7 +310,6 @@ vector<Individual*> SPEA2::nonDominatedSol(vector<Individual*> individuals) {
 			Individual* id = new Individual(*individuals.at(i));
 			nonDominated.push_back(id);
 		}
-
 	}
 
 	return nonDominated;
@@ -277,7 +328,6 @@ void SPEA2::getNonDominatedSolutions(vector<Individual*>& index, vector<Individu
 		else
 			delete ind;
 	}
-
 	index.swap(newVector);
 }
 
@@ -321,7 +371,7 @@ void SPEA2::genericalClustering(vector<Individual*>& individuos, int nToRemove) 
 	while (individuos.size() > (finalSize)) {
 		int pos_one = 0 + (rand() % individuos.size());
 		int pos_two = 0 + (rand() % individuos.size());
-
+		
 		if (this->isDominated(individuos[pos_one], individuos[pos_two])) {
 			individuos.erase(individuos.begin() + pos_one);
 		}
@@ -528,7 +578,6 @@ void SPEA2::dump(vector<Individual*> individuals) {
 
 	/*cout << "\n Population: " << endl;*/
 	for (unsigned int i = 0; i < individuals.size(); i++) {
-
 		cout << individuals.at(i)->getAptidao()[0] << ";" << individuals.at(i)->getAptidao()[1] << endl;
 	}
 }
@@ -537,10 +586,8 @@ void SPEA2::dumpPopulation() {
 
 	cout << "\n Population: " << endl;
 	for (unsigned int i = 0; i < this->population->getIndividuals().size(); i++) {
-
 		cout << this->population->getIndividuals()[i]->getAptidao()[0] << ";" << this->population->getIndividuals()[i]->getAptidao()[1] << endl;
 	}
-
 }
 
 void SPEA2::fullDump(vector<Individual*> individuals) {
@@ -554,7 +601,6 @@ void SPEA2::fullDump(vector<Individual*> individuals) {
 void SPEA2::dumpIndividual(Individual* ind) {
 	/*cout << "Individual: " << "";*/
 	for (unsigned int i = 0; i < ind->getGenes().size(); i++) {
-
 		cout << ind->getGenes()[i] << ";";
 	}
 	cout << "" << endl;
@@ -598,11 +644,10 @@ string SPEA2::getMetaHeuristcaByNumber(int number)
 	}
 }
 
-void SPEA2::competitiveAbordage(vector<double> hipervolumes, vector< vector< Individual*> >& populationsOfEachMetaheuristic)
-{
+void SPEA2::competitiveAbordage(vector<double> hipervolumes, vector< vector< Individual*> >& populationsOfEachMetaheuristic) {
 	int pos = this->getMaxValuePosition(hipervolumes);
 	double bestHipervolumeFounded = hipervolumes.at(pos);
-	/*cout << bestHipervolumeFounded << " | " << this->lastHipervolume << endl;*/
+
 	if (bestHipervolumeFounded > this->lastHipervolume) {
 		vector<Individual*> newPop = populationsOfEachMetaheuristic.at(pos);
 		this->clearVector(this->population->getIndividuals());
@@ -613,13 +658,14 @@ void SPEA2::competitiveAbordage(vector<double> hipervolumes, vector< vector< Ind
 		pos = -1; 	//to delete all populations obtained by heuristics if their are not used
 	}
 
-	//desallocating space of not choosen heuristics
+	////desallocating space of not choosen heuristics
+	//single only
 	for (size_t i = 0; i < populationsOfEachMetaheuristic.size(); i++) {
-
 		if (i != pos) {
 			this->clearVector(populationsOfEachMetaheuristic[i]);
 		}
 	}
+
 	if (pos == -1)
 		populationsOfEachMetaheuristic.clear();
 }
@@ -642,10 +688,10 @@ void SPEA2::cooperativeAbordage(vector< vector<Individual*> >& populationsOfEach
 		this->copyVectorIndividuals(populationsOfEachMetaheuristic.at(i), allIndividuals);
 	}
 
-	this->genericalClustering(allIndividuals, (allIndividuals.size() - this->populationSize));	
+	this->genericalClustering(allIndividuals, (allIndividuals.size() - this->populationSize));
 	vector<Individual*> nonDominated = this->nonDominatedSol(allIndividuals);
 	double value = calc->calculateForTwoObjective(nonDominated);
-	
+
 	if (value > lastHipervolume) {
 		this->clearVector(this->population->getIndividuals());
 		this->population->setIndividuals(allIndividuals);
@@ -660,7 +706,7 @@ void SPEA2::cooperativeAbordage(vector< vector<Individual*> >& populationsOfEach
 	populationsOfEachMetaheuristic.clear();
 	this->clearVector(nonDominated);
 	delete calc;
-	
+
 }
 
 int SPEA2::comparePopulations(vector< vector< Individual*> >& populationsOfEachMetaheuristic) {
@@ -683,7 +729,7 @@ int SPEA2::randomPosition(Population *& pop)
 
 int SPEA2::randomPosition(int size)
 {
-	return 0 + (rand() % abs(size));;
+	return 0 + (rand() % abs(size));
 }
 
 void SPEA2::modifyPopulation(int rank, Population* population) {
@@ -697,11 +743,12 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 		Population* toBeModifiedByGA = population;
 		GA* ga = new GA();
 		ga->setCrossOverRate(0.8);
-		ga->setMutationRate(0.2);
+		ga->setMutationRate(0.1);
 		ga->setTheta(0.01);
 		ga->setLimiteInferior(this->limiteInferior);
 		ga->setLimiteSuperior(this->limiteSuperior);
 		ga->run(toBeModifiedByGA);
+
 		vector<Individual*> nonDominated = this->nonDominatedSol(toBeModifiedByGA->getIndividuals());
 		double hypervolumeFound = calc->calculateForTwoObjective(nonDominated);
 		this->clearVector(nonDominated);
@@ -721,6 +768,7 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 		de->setLimiteSuperior(this->limiteSuperior);
 		de->setLimiteInferior(this->limiteInferior);
 		de->run(toBeModifiedByDE);
+
 		vector<Individual*> nonDominated = this->nonDominatedSol(toBeModifiedByDE->getIndividuals());
 		double hypervolumeFound = calc->calculateForTwoObjective(nonDominated);
 		this->clearVector(nonDominated);
@@ -739,6 +787,7 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 		pso->setLimiteInferior(this->limiteInferior);
 		pso->setLimiteSuperior(this->limiteSuperior);
 		pso->run(toBeModifiedByPSO);
+
 		vector<Individual*> nonDominated = this->nonDominatedSol(toBeModifiedByPSO->getIndividuals());
 		double hypervolumeFound = calc->calculateForTwoObjective(nonDominated);
 		this->clearVector(nonDominated);
@@ -753,6 +802,54 @@ void SPEA2::modifyPopulation(int rank, Population* population) {
 	delete mat;
 	delete p;
 	delete calc;
+}
+
+vector< vector<Individual*> > SPEA2::modifyPopulationSingle(Population* population) {
+
+	vector< vector<Individual*> > individuals;
+
+	Population* toBeModifiedByGA = new Population(*population);
+	GA* ga = new GA();
+	ga->setCrossOverRate(0.8);
+	ga->setMutationRate(0.2);
+	ga->setTheta(0.01);
+	ga->setLimiteInferior(this->limiteInferior);
+	ga->setLimiteSuperior(this->limiteSuperior);
+	ga->run(toBeModifiedByGA);
+	individuals.push_back(toBeModifiedByGA->getIndividuals());
+	delete ga;
+
+	Population* toBeModifiedByDE = new Population(*population);
+	DE* de = new DE();
+	de->setCrossoverRate(0.5);
+	de->setLimiteSuperior(this->limiteSuperior);
+	de->setLimiteInferior(this->limiteInferior);
+	de->run(toBeModifiedByDE);
+	individuals.push_back(toBeModifiedByDE->getIndividuals());
+	delete de;
+
+	Population* toBeModifiedByPSO = new Population(*population);
+	PSO* pso = new PSO();
+	pso->setLimiteInferior(this->limiteInferior);
+	pso->setLimiteSuperior(this->limiteSuperior);
+	pso->run(toBeModifiedByPSO);
+	individuals.push_back(toBeModifiedByPSO->getIndividuals());
+	delete pso;
+
+	return individuals;
+}
+
+vector<double> SPEA2::calcHiperVolume(vector<vector<Individual*>>& individualsOffAllMetaheuristics) {
+	vector<double> hipervolumes;
+	HyperVolumeCalculator* calc = new HyperVolumeCalculator();
+
+	for (size_t i = 0; i < individualsOffAllMetaheuristics.size(); i++) {
+		vector<Individual*> nonDominated = this->nonDominatedSol(individualsOffAllMetaheuristics.at(i));
+		hipervolumes.push_back(calc->calculateForTwoObjective(nonDominated));
+		this->clearVector(nonDominated);
+	}
+	delete calc;
+	return hipervolumes;
 }
 
 bool SPEA2::disperse(vector<Individual*> v, Individual* id) {
@@ -770,8 +867,7 @@ bool SPEA2::disperse(vector<Individual*> v, Individual* id) {
 /*--------------------------------------- Communication methods -------------------------------------- */
 
 /*Send a simple message with a integer 1 for n processes*/
-void SPEA2::sendMessage(int numOfProcesses)
-{
+void SPEA2::sendMessage(int numOfProcesses) {
 	double message = 1;
 
 	for (int count = 1; count <= numOfProcesses; count++) {
@@ -782,8 +878,7 @@ void SPEA2::sendMessage(int numOfProcesses)
 }
 
 /*Receive a double as a messagefrom any source*/
-double SPEA2::receiveMessage()
-{
+double SPEA2::receiveMessage() {
 	MPI_Request request;
 	MPI_Status status;
 	double message;
@@ -804,8 +899,7 @@ double SPEA2::receiveMessage()
 	}
 }
 
-void SPEA2::waitMessageForMe(int tag)
-{
+void SPEA2::waitMessageForMe(int tag) {
 	MPI_Request request;
 	MPI_Status status;
 	double message;
@@ -826,9 +920,7 @@ void SPEA2::waitMessageForMe(int tag)
 	}
 }
 
-void SPEA2::sendMatrix(int numOfProcesses, double * matrix, size_t numLines, size_t numCollums)
-{
-
+void SPEA2::sendMatrix(int numOfProcesses, double * matrix, size_t numLines, size_t numCollums) {
 	for (int count = 1; count <= numOfProcesses; count++) {
 		if (debug)
 			cout << "Send matrix to ---> " << count << endl;
@@ -882,7 +974,6 @@ double * SPEA2::waitMatrixWithHypervolumeForMe(int tag, size_t numLines, size_t 
 		if (flag != 0) {
 			if (debug)
 				cout << "Matrix to rank: " << tag << " received from rank " << status.MPI_SOURCE << endl;
-
 			break;
 		}
 	}
@@ -901,7 +992,6 @@ void SPEA2::clearVector(vector<Individual*>& v)
 void SPEA2::copyVectorIndividuals(vector<Individual*>& one, vector<Individual*>& two)
 {
 	for (size_t i = 0; i < one.size(); i++) {
-
 		Individual * id = new Individual(*one.at(i));
 		two.push_back(id);
 	}
@@ -917,6 +1007,16 @@ void SPEA2::initBounds(double lowerBound, double upperBound)
 
 void SPEA2::initBounds()
 {
-	limiteInferior = { 0, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5};
-	limiteSuperior = { 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
+	/*limiteInferior = { 0, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5, -5 };
+	limiteSuperior = { 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };*/
+
+	limiteInferior = { 36, 36, 60, 60, 47, 68, 110, 135, 135, 135,
+						130, 94, 94, 125, 125, 125, 125, 220, 220, 242,
+						242, 254, 254, 254, 254, 254, 254, 10, 10, 10,
+						47, 60, 60, 60, 90, 90, 90, 25, 25, 25, 242 };
+
+	limiteSuperior = { 114, 114, 120, 190, 97, 140, 300, 300, 300, 300,
+						375, 375, 500, 500, 500, 500, 500, 500,550, 550,
+						550,550 ,550 ,550 ,550 ,550, 150,150,150, 97,
+						190, 190, 190, 200, 200, 200, 110, 110, 110, 550 };
 }

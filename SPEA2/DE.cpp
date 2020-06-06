@@ -15,7 +15,7 @@ DE::~DE()
 
 void DE::run(Population* population)
 {
-	for (int generations = 0; generations < 50; generations++) {
+	for (int generations = 0; generations < numberOfIterations; generations++) {
 		vector<Individual*> donators;
 		this->mutar(donators, population);
 		this->cruzar(donators, population);
@@ -63,7 +63,7 @@ void DE::mutar(vector<Individual*>& donators, Population* population)
 	size_t size = population->getIndividuals().size();
 	size_t solutionSize = population->getIndividuals()[0]->getGenes().size();
 	vector<Individual*> lvDonators;
-	
+
 	for (unsigned int i = 0; i < size; i++) {
 
 		int posOne = i;
@@ -130,11 +130,11 @@ void DE::cruzar(vector<Individual*> donators, Population* population)
 		Individual* target = donator->getTarget();
 		Individual* candidate = new Individual();
 		candidate->setQtdGenes(donator->getQtdGenes());
-		
+
 		for (int j = 0; j < solutionSize; j++) {
 
 			double tentative = ((double)rand() / (double)(RAND_MAX)) * 1;
-		
+
 			if (tentative > crossoverRate)
 				candidate->getGenes().push_back(target->getGenes()[j]);
 			else

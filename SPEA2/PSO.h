@@ -27,6 +27,7 @@ private:
 	double w = 0.9;
 	const double c1 = 0.5;
 	const double c2 = 0.5;
+	const int numberOfIterations = 30;
 	vector<double> limiteSuperior;
 	vector<double> limiteInferior;
 	ZDT* objective;

@@ -14,11 +14,11 @@ PSO::~PSO()
 }
 
 void PSO::run(Population* population)
-{	
+{
 	this->initPopulation(population);
 	int times = population->getIndividuals().size();
 
-	for (int generations = 0; generations < 50; generations++) {
+	for (int generations = 0; generations < numberOfIterations; generations++) {
 
 		Individual* leader = this->getLeader(population);
 		vector<double> p = leader->getGenes();
@@ -43,8 +43,6 @@ void PSO::run(Population* population)
 				double equationB = (gene + equationA);
 
 				if (equationB > limiteSuperior[j] || equationB < limiteInferior[j]) {
-
-					/*equationB = manterValorNoLimite(equationB);*/
 					equationB = keepValuesInBounds(equationB, limiteInferior[j], limiteSuperior[j]);
 					trial->getVelocity()[j] *= (-0.5);
 				}
@@ -55,8 +53,6 @@ void PSO::run(Population* population)
 			trial->setAptidao(this->evaluateIndividual(trial));
 
 			if (isDominated(individual, trial)) {
-				int pos = i;
-				individual = population->getIndividuals()[pos];
 				individual->setAptidao(trial->getAptidao());
 				individual->setHistoricalAptidao(trial->getHistoricalAptidao());
 				individual->setGenes(trial->getGenes());

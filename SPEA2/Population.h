@@ -17,7 +17,8 @@ using namespace std;
 class Population
 {
     public:
-        Population();		
+        Population();
+		Population(const Population & population);
         virtual ~Population();
         vector<Individual*>& getIndividuals();
         const vector<Individual*> getIndividualsCopy();

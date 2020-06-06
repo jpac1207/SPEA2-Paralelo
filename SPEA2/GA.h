@@ -49,6 +49,7 @@ class GA
 		vector<double> limiteSuperior;
 		double theta;
         const int M = 10;
+		const int numberOfIterations = 30;
         vector<double> getGenes(int qtdGenes, double limiteInferior, double limiteSuperior);
         int roulette(double s, Population* p);
 		int tournament(Population* population);
